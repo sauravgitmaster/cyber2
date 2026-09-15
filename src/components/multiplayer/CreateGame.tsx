@@ -5,6 +5,7 @@ import { RoomStateClient } from '../../types/multiplayer';
 
 interface CreateGameProps {
   room: RoomStateClient | null;
+  roomCode?: string;
   loading: boolean;
   onStartGame: () => void;
   onBack: () => void;
@@ -12,6 +13,7 @@ interface CreateGameProps {
 
 export const CreateGame: React.FC<CreateGameProps> = ({
   room,
+  roomCode,
   loading,
   onStartGame,
   onBack,
@@ -19,7 +21,13 @@ export const CreateGame: React.FC<CreateGameProps> = ({
   const [copiedCode, setCopiedCode] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
 
-  const code = room?.code || '';
+  // Automatically show the code from room, roomCode prop, or localStorage
+  const code =
+    room?.code ||
+    roomCode ||
+    (typeof window !== 'undefined'
+      ? localStorage.getItem('cybermentor_recent_room_code') || ''
+      : '');
 
   const handleCopyCode = () => {
     if (!code) return;
@@ -66,7 +74,7 @@ export const CreateGame: React.FC<CreateGameProps> = ({
       {/* Big Display of Code */}
       <div className="p-5 rounded-2xl bg-gradient-to-tr from-blue-50 to-indigo-50 border-2 border-blue-200 space-y-3">
         <div className="text-4xl sm:text-5xl font-mono font-black text-[#243047] tracking-widest selection:bg-blue-200">
-          {code || '••••••'}
+          {code || (loading ? 'CREATING...' : '••••••')}
         </div>
 
         <div className="flex items-center justify-center gap-2 pt-1">

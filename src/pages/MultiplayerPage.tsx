@@ -23,6 +23,16 @@ export const MultiplayerPage: React.FC<MultiplayerPageProps> = ({
 }) => {
   const [lobbyView, setLobbyView] = useState<LobbyView>('menu');
   const [isReviewing, setIsReviewing] = useState(false);
+  const [prefilledCode, setPrefilledCode] = useState<string>(() => {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const urlCode = params.get('join') || params.get('code');
+      if (urlCode) return urlCode.trim().toUpperCase();
+      return (localStorage.getItem('cybermentor_recent_room_code') || '').trim().toUpperCase();
+    } catch {
+      return '';
+    }
+  });
 
   const {
     room,
@@ -46,16 +56,29 @@ export const MultiplayerPage: React.FC<MultiplayerPageProps> = ({
   // Check URL params for invite link e.g. ?join=7KQ4M2
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    const joinCode = params.get('join');
-    if (joinCode && !room) {
-      setLobbyView('join');
+    const joinCode = params.get('join') || params.get('code');
+    if (joinCode) {
+      const upper = joinCode.trim().toUpperCase();
+      setPrefilledCode(upper);
+      if (!room) {
+        setLobbyView('join');
+      }
     }
   }, [room]);
+
+  // Automatically ensure a room code is generated when entering create view
+  useEffect(() => {
+    if (lobbyView === 'create' && !room && !loading) {
+      createRoom();
+    }
+  }, [lobbyView, room, loading, createRoom]);
 
   const handleCreateGame = async () => {
     try {
       setLobbyView('create');
-      await createRoom();
+      if (!room) {
+        await createRoom();
+      }
     } catch {
       // handled in hook
     }
@@ -161,6 +184,7 @@ export const MultiplayerPage: React.FC<MultiplayerPageProps> = ({
       <div className="min-h-screen bg-[#F7F9FC] py-8 px-4 font-sans text-[#243047] flex flex-col justify-center items-center">
         <CreateGame
           room={room}
+          roomCode={roomCode || room?.code || undefined}
           loading={loading}
           onStartGame={startGame}
           onBack={handleBackToMenu}
@@ -177,6 +201,7 @@ export const MultiplayerPage: React.FC<MultiplayerPageProps> = ({
           room={room}
           loading={loading}
           error={error}
+          initialCode={prefilledCode}
           onJoin={handleJoinGame}
           onBack={handleBackToMenu}
         />
@@ -215,6 +240,32 @@ export const MultiplayerPage: React.FC<MultiplayerPageProps> = ({
             Answer 8 fast cyber challenges side-by-side in real-time. Who can identify the safe action first?
           </p>
         </div>
+
+        {/* Auto-detected room code banner if present */}
+        {prefilledCode && (
+          <div className="p-4 rounded-2xl bg-gradient-to-r from-blue-50 to-indigo-50 border-2 border-[#4F7CFF]/30 flex items-center justify-between gap-3 animate-in fade-in slide-in-from-top-2">
+            <div className="flex items-center gap-3">
+              <span className="text-2xl">🎮</span>
+              <div className="text-left">
+                <div className="text-[10px] font-black uppercase text-[#4F7CFF] tracking-wider">
+                  Detected Game Code
+                </div>
+                <div className="text-base font-black font-mono text-[#243047]">
+                  {prefilledCode}
+                </div>
+              </div>
+            </div>
+            <button
+              onClick={() => {
+                setLobbyView('join');
+                handleJoinGame(prefilledCode);
+              }}
+              className="px-4 py-2 rounded-xl bg-[#4F7CFF] hover:bg-[#3D6CE6] text-white font-black text-xs shadow-sm transition-all"
+            >
+              Join Now
+            </button>
+          </div>
+        )}
 
         {/* Game Mode Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

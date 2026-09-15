@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { ArrowLeft, ArrowRight, AlertCircle, Sparkles } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { ArrowLeft, ArrowRight, AlertCircle, Sparkles, ClipboardPaste } from 'lucide-react';
 import { ByteMascot } from '../common/ByteMascot';
 import { RoomStateClient } from '../../types/multiplayer';
 
@@ -7,6 +7,7 @@ interface JoinGameProps {
   room: RoomStateClient | null;
   loading: boolean;
   error: string | null;
+  initialCode?: string;
   onJoin: (code: string) => void;
   onBack: () => void;
 }
@@ -15,10 +16,47 @@ export const JoinGame: React.FC<JoinGameProps> = ({
   room,
   loading,
   error,
+  initialCode,
   onJoin,
   onBack,
 }) => {
-  const [code, setCode] = useState('');
+  const [code, setCode] = useState<string>(() => {
+    if (initialCode) return initialCode.trim().toUpperCase();
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const urlCode = params.get('join') || params.get('code');
+      if (urlCode) return urlCode.trim().toUpperCase();
+      return (localStorage.getItem('cybermentor_recent_room_code') || '').trim().toUpperCase();
+    } catch {
+      return '';
+    }
+  });
+
+  const recentSavedCode = typeof window !== 'undefined'
+    ? localStorage.getItem('cybermentor_recent_room_code')
+    : null;
+
+  useEffect(() => {
+    if (initialCode) {
+      setCode(initialCode.trim().toUpperCase());
+    }
+  }, [initialCode]);
+
+  const handlePaste = async () => {
+    try {
+      const text = await navigator.clipboard.readText();
+      if (text) {
+        let extracted = text.trim();
+        if (extracted.includes('join=')) {
+          const match = extracted.match(/join=([A-Za-z0-9]{4,8})/);
+          if (match) extracted = match[1];
+        }
+        setCode(extracted.toUpperCase().slice(0, 8));
+      }
+    } catch {
+      // clipboard permission denied
+    }
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -57,7 +95,7 @@ export const JoinGame: React.FC<JoinGameProps> = ({
 
       {!isJoined ? (
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
+          <div className="space-y-2">
             <input
               type="text"
               maxLength={8}
@@ -67,6 +105,35 @@ export const JoinGame: React.FC<JoinGameProps> = ({
               className="w-full text-center text-3xl sm:text-4xl font-mono font-black tracking-widest py-4 px-4 bg-slate-50 border-2 border-slate-200 rounded-2xl text-[#243047] placeholder:text-slate-300 focus:outline-none focus:border-[#4F7CFF] focus:bg-white transition-all uppercase"
               autoFocus
             />
+
+            {/* Quick helper controls: Paste from clipboard or use recent code */}
+            <div className="flex items-center justify-center gap-2 pt-1">
+              <button
+                type="button"
+                onClick={handlePaste}
+                className="px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-bold flex items-center gap-1.5 transition-colors"
+              >
+                <ClipboardPaste className="w-3.5 h-3.5 text-[#4F7CFF]" />
+                <span>Paste Code</span>
+              </button>
+
+              {recentSavedCode && recentSavedCode !== code && (
+                <button
+                  type="button"
+                  onClick={() => setCode(recentSavedCode.toUpperCase())}
+                  className="px-3 py-1.5 rounded-lg bg-blue-50 hover:bg-blue-100 text-[#4F7CFF] text-xs font-bold flex items-center gap-1 transition-colors"
+                >
+                  <Sparkles className="w-3.5 h-3.5" />
+                  <span>Use Recent: {recentSavedCode}</span>
+                </button>
+              )}
+            </div>
+
+            {code && (
+              <div className="text-[11px] font-bold text-emerald-600">
+                ✨ Ready to join with code: {code}
+              </div>
+            )}
           </div>
 
           {error && (

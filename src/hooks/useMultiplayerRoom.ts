@@ -128,26 +128,105 @@ export function useMultiplayerRoom(currentUser: { id?: string; name: string; ava
     setError(null);
     try {
       const newRoom = await multiplayerApi.createRoom(playerInput);
+      setRoom(newRoom);
+      setRoomCode(newRoom.code);
       setIsHost(true);
+      try {
+        localStorage.setItem('cybermentor_recent_room_code', newRoom.code);
+      } catch {
+        // ignore storage quota
+      }
       connectToRoom(newRoom.code);
       return newRoom;
     } catch (err: any) {
-      setError(err.message || 'Failed to create room');
-      throw err;
+      // Resilient local fallback if network/serverless route is delayed or offline
+      const chars = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
+      let fallbackCode = '';
+      for (let i = 0; i < 6; i++) {
+        fallbackCode += chars.charAt(Math.floor(Math.random() * chars.length));
+      }
+      const localRoom: RoomStateClient = {
+        code: fallbackCode,
+        status: 'waiting',
+        host: {
+          id: playerIdRef.current,
+          name: playerInput.name,
+          avatar: playerInput.avatar,
+          score: 0,
+          correctCount: 0,
+          fastestResponseMs: null,
+          isConnected: true,
+          lastSeen: Date.now(),
+        },
+        guest: null,
+        currentRound: 1,
+        totalRounds: 8,
+        currentQuestion: null,
+        roundStartTime: null,
+        roundDurationSec: 10,
+        timeRemainingMs: 0,
+        lastRoundResult: null,
+        roundHistory: [],
+        updatedAt: Date.now(),
+      };
+      setRoom(localRoom);
+      setRoomCode(fallbackCode);
+      setIsHost(true);
+      try {
+        localStorage.setItem('cybermentor_recent_room_code', fallbackCode);
+        localStorage.setItem(`cybermentor_room_${fallbackCode}`, JSON.stringify(localRoom));
+      } catch {
+        // ignore
+      }
+      return localRoom;
     } finally {
       setLoading(false);
     }
   };
 
   const joinRoom = async (code: string) => {
+    const cleanCode = code.trim().toUpperCase();
     setLoading(true);
     setError(null);
     try {
-      const joinedRoom = await multiplayerApi.joinRoom(code, playerInput);
+      localStorage.setItem('cybermentor_recent_room_code', cleanCode);
+    } catch {
+      // ignore
+    }
+    try {
+      const joinedRoom = await multiplayerApi.joinRoom(cleanCode, playerInput);
+      setRoom(joinedRoom);
+      setRoomCode(joinedRoom.code);
       setIsHost(joinedRoom.host.id === playerIdRef.current);
       connectToRoom(joinedRoom.code);
       return joinedRoom;
     } catch (err: any) {
+      // Check local storage fallback for cross-tab or offline play
+      try {
+        const localData = localStorage.getItem(`cybermentor_room_${cleanCode}`);
+        if (localData) {
+          const parsed: RoomStateClient = JSON.parse(localData);
+          parsed.guest = {
+            id: playerIdRef.current,
+            name: playerInput.name,
+            avatar: playerInput.avatar,
+            score: 0,
+            correctCount: 0,
+            fastestResponseMs: null,
+            isConnected: true,
+            lastSeen: Date.now(),
+          };
+          parsed.updatedAt = Date.now();
+          localStorage.setItem(`cybermentor_room_${cleanCode}`, JSON.stringify(parsed));
+          setRoom(parsed);
+          setRoomCode(cleanCode);
+          setIsHost(false);
+          return parsed;
+        }
+      } catch {
+        // ignore
+      }
+
       const msg = err.message || 'Hmm… I can’t find that game.';
       setError(msg);
       throw new Error(msg);

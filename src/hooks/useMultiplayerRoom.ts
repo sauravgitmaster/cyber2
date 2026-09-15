@@ -18,6 +18,55 @@ function getSessionPlayerId(baseUserId?: string): string {
   }
 }
 
+// Function to validate whether incoming state should replace current room state
+// CRITICAL: A game in progress ('starting', 'in_round', 'round_locked', 'game_over')
+// must NEVER regress back to 'waiting'.
+function shouldAcceptStateUpdate(
+  current: RoomStateClient | null,
+  incoming: RoomStateClient
+): boolean {
+  if (!current) return true;
+
+  const statusPriority: Record<RoomStateClient['status'], number> = {
+    waiting: 0,
+    starting: 1,
+    in_round: 2,
+    round_locked: 2,
+    game_over: 3,
+    expired: -1,
+  };
+
+  const curRank = statusPriority[current.status] ?? 0;
+  const incRank = statusPriority[incoming.status] ?? 0;
+
+  // Never revert an active match back to 'waiting'
+  if (curRank >= 1 && incRank === 0) {
+    return false;
+  }
+
+  // If incoming has advanced in rounds
+  if (incoming.currentRound > current.currentRound) {
+    return true;
+  }
+
+  // If incoming has advanced in phase/status
+  if (incRank > curRank) {
+    return true;
+  }
+
+  // If current was missing guest and incoming attached one
+  if (!current.guest && incoming.guest) {
+    return true;
+  }
+
+  // If incoming timestamp is newer or equal
+  if (incoming.updatedAt >= current.updatedAt) {
+    return true;
+  }
+
+  return false;
+}
+
 export function useMultiplayerRoom(currentUser: { id?: string; name: string; avatar: string }) {
   const [room, setRoom] = useState<RoomStateClient | null>(null);
   const [roomCode, setRoomCode] = useState<string | null>(null);
@@ -30,6 +79,7 @@ export function useMultiplayerRoom(currentUser: { id?: string; name: string; ava
   const playerIdRef = useRef<string>(getSessionPlayerId(currentUser.id));
   const activeRoomCodeRef = useRef<string | null>(null);
   const roomRef = useRef<RoomStateClient | null>(null);
+  const storedQuestionsRef = useRef<any[]>([]);
 
   useEffect(() => {
     roomRef.current = room;
@@ -97,25 +147,41 @@ export function useMultiplayerRoom(currentUser: { id?: string; name: string; ava
       cleanupSubscriptions();
       setRoomCode(code);
 
-      // 1. Setup cross-tab BroadcastChannel for 0ms latency sync across windows/tabs
+      // Try reading pre-cached questions for this room
+      try {
+        const savedQ = localStorage.getItem(`cybermentor_questions_${code}`);
+        if (savedQ) {
+          storedQuestionsRef.current = JSON.parse(savedQ);
+        }
+      } catch {
+        // ignore
+      }
+
+      // 1. Setup cross-tab BroadcastChannel for instant sync across windows/tabs
       try {
         if (typeof BroadcastChannel !== 'undefined') {
           const bc = new BroadcastChannel(`cybermentor_room_${code}`);
           bc.onmessage = (event) => {
-            if (event.data && event.data.type === 'ROOM_UPDATE' && event.data.room) {
-              const incoming: RoomStateClient = event.data.room;
-              setRoom((prev) => {
-                if (
-                  !prev ||
-                  incoming.updatedAt >= prev.updatedAt ||
-                  (!prev.guest && incoming.guest) ||
-                  prev.status !== incoming.status
-                ) {
-                  setIsHost(incoming.host.id === playerIdRef.current);
-                  return incoming;
+            if (event.data) {
+              if (event.data.questions && Array.isArray(event.data.questions)) {
+                storedQuestionsRef.current = event.data.questions;
+                try {
+                  localStorage.setItem(`cybermentor_questions_${code}`, JSON.stringify(event.data.questions));
+                } catch {
+                  // ignore
                 }
-                return prev;
-              });
+              }
+
+              if (event.data.room) {
+                const incoming: RoomStateClient = event.data.room;
+                setRoom((prev) => {
+                  if (shouldAcceptStateUpdate(prev, incoming)) {
+                    setIsHost(incoming.host.id === playerIdRef.current);
+                    return incoming;
+                  }
+                  return prev;
+                });
+              }
             }
           };
           broadcastChannelRef.current = bc;
@@ -126,16 +192,29 @@ export function useMultiplayerRoom(currentUser: { id?: string; name: string; ava
 
       // 2. Setup storage event listener for cross-tab sync
       const handleStorage = (e: StorageEvent) => {
-        if (e.key === `cybermentor_room_${code}` && e.newValue) {
+        if (e.key === `cybermentor_action_${code}` && e.newValue) {
+          try {
+            const action = JSON.parse(e.newValue);
+            if (action.questions && Array.isArray(action.questions)) {
+              storedQuestionsRef.current = action.questions;
+            }
+            if (action.room) {
+              setRoom((prev) => {
+                if (shouldAcceptStateUpdate(prev, action.room)) {
+                  setIsHost(action.room.host.id === playerIdRef.current);
+                  return action.room;
+                }
+                return prev;
+              });
+            }
+          } catch {
+            // ignore
+          }
+        } else if (e.key === `cybermentor_room_${code}` && e.newValue) {
           try {
             const parsed: RoomStateClient = JSON.parse(e.newValue);
             setRoom((prev) => {
-              if (
-                !prev ||
-                parsed.updatedAt >= prev.updatedAt ||
-                (!prev.guest && parsed.guest) ||
-                parsed.status !== prev.status
-              ) {
+              if (shouldAcceptStateUpdate(prev, parsed)) {
                 setIsHost(parsed.host.id === playerIdRef.current);
                 return parsed;
               }
@@ -153,9 +232,13 @@ export function useMultiplayerRoom(currentUser: { id?: string; name: string; ava
       multiplayerApi
         .getRoomState(code, playerIdRef.current)
         .then((state) => {
-          setRoom(state);
-          setIsHost(state.host.id === playerIdRef.current);
-          broadcastRoomState(state);
+          setRoom((prev) => {
+            if (shouldAcceptStateUpdate(prev, state)) {
+              setIsHost(state.host.id === playerIdRef.current);
+              return state;
+            }
+            return prev;
+          });
         })
         .catch(() => {
           // Check localStorage if server is offline or serverless cold start
@@ -163,8 +246,13 @@ export function useMultiplayerRoom(currentUser: { id?: string; name: string; ava
             const local = localStorage.getItem(`cybermentor_room_${code}`);
             if (local) {
               const parsed: RoomStateClient = JSON.parse(local);
-              setRoom(parsed);
-              setIsHost(parsed.host.id === playerIdRef.current);
+              setRoom((prev) => {
+                if (shouldAcceptStateUpdate(prev, parsed)) {
+                  setIsHost(parsed.host.id === playerIdRef.current);
+                  return parsed;
+                }
+                return prev;
+              });
             }
           } catch {
             // ignore
@@ -179,10 +267,14 @@ export function useMultiplayerRoom(currentUser: { id?: string; name: string; ava
         es.onmessage = (event) => {
           try {
             const data: RoomStateClient = JSON.parse(event.data);
-            setRoom(data);
-            setIsHost(data.host.id === playerIdRef.current);
+            setRoom((prev) => {
+              if (shouldAcceptStateUpdate(prev, data)) {
+                setIsHost(data.host.id === playerIdRef.current);
+                return data;
+              }
+              return prev;
+            });
             setError(null);
-            broadcastRoomState(data);
           } catch {
             // ignore JSON parse error
           }
@@ -201,47 +293,37 @@ export function useMultiplayerRoom(currentUser: { id?: string; name: string; ava
 
       // 5. Active sync polling every 500ms
       pollIntervalRef.current = window.setInterval(async () => {
-        // Check server state
+        // A. Check server state (advance authoritative state)
         try {
           const fresh = await multiplayerApi.getRoomState(code, playerIdRef.current);
           if (fresh) {
             setRoom((prev) => {
-              if (
-                !prev ||
-                fresh.updatedAt >= prev.updatedAt ||
-                (!prev.guest && fresh.guest) ||
-                prev.status !== fresh.status
-              ) {
+              if (shouldAcceptStateUpdate(prev, fresh)) {
                 setIsHost(fresh.host.id === playerIdRef.current);
-                broadcastRoomState(fresh);
                 return fresh;
               }
               return prev;
             });
-            return;
           }
         } catch {
-          // Server error or serverless cold-start: inspect localStorage
-          try {
-            const local = localStorage.getItem(`cybermentor_room_${code}`);
-            if (local) {
-              const parsed: RoomStateClient = JSON.parse(local);
-              setRoom((prev) => {
-                if (
-                  !prev ||
-                  parsed.updatedAt > prev.updatedAt ||
-                  (!prev.guest && parsed.guest) ||
-                  parsed.status !== prev.status
-                ) {
-                  setIsHost(parsed.host.id === playerIdRef.current);
-                  return parsed;
-                }
-                return prev;
-              });
-            }
-          } catch {
-            // ignore
+          // ignore
+        }
+
+        // B. Check localStorage for instant cross-tab sync
+        try {
+          const local = localStorage.getItem(`cybermentor_room_${code}`);
+          if (local) {
+            const parsed: RoomStateClient = JSON.parse(local);
+            setRoom((prev) => {
+              if (shouldAcceptStateUpdate(prev, parsed)) {
+                setIsHost(parsed.host.id === playerIdRef.current);
+                return parsed;
+              }
+              return prev;
+            });
           }
+        } catch {
+          // ignore
         }
       }, 500);
 
@@ -250,7 +332,7 @@ export function useMultiplayerRoom(currentUser: { id?: string; name: string; ava
         multiplayerApi.heartbeat(code, playerIdRef.current);
       }, 3000);
     },
-    [cleanupSubscriptions, broadcastRoomState]
+    [cleanupSubscriptions]
   );
 
   // Clean up ONLY on unmount (NOT when roomCode changes!)
@@ -419,47 +501,105 @@ export function useMultiplayerRoom(currentUser: { id?: string; name: string; ava
     if (!roomCode) return;
     setError(null);
 
-    // Call server API
+    // 1. Prepare synchronized questions
+    let questions = storedQuestionsRef.current;
+    if (!questions || questions.length < 8) {
+      questions = getEightRandomQuestions();
+      storedQuestionsRef.current = questions;
+    }
     try {
-      await multiplayerApi.startGame(roomCode, playerIdRef.current);
+      localStorage.setItem(`cybermentor_questions_${roomCode}`, JSON.stringify(questions));
     } catch {
-      // ignore if serverless/offline
+      // ignore
     }
 
-    // Local state transition to starting countdown
-    setRoom((prev) => {
-      if (!prev) return prev;
-      const questions = getEightRandomQuestions();
-      const firstQ = questions[0];
-      const clientFirstQ: MultiplayerQuestionClient = {
-        id: firstQ.id,
-        roundNumber: 1,
-        totalRounds: 8,
-        category: firstQ.category,
-        difficulty: firstQ.difficulty,
-        situation: firstQ.situation,
-        prompt: firstQ.prompt,
-        options: firstQ.options,
-      };
+    const firstQ = questions[0];
+    const clientFirstQ: MultiplayerQuestionClient = {
+      id: firstQ.id,
+      roundNumber: 1,
+      totalRounds: 8,
+      category: firstQ.category,
+      difficulty: firstQ.difficulty,
+      situation: firstQ.situation,
+      prompt: firstQ.prompt,
+      options: firstQ.options,
+    };
 
-      const startingState: RoomStateClient = {
-        ...prev,
-        status: 'starting',
-        currentRound: 1,
-        totalRounds: 8,
-        currentQuestion: clientFirstQ,
-        roundDurationSec: 10,
-        roundStartTime: null,
-        lastRoundResult: null,
-        roundHistory: [],
-        updatedAt: Date.now(),
-        host: { ...prev.host, score: 0, correctCount: 0 },
-        guest: prev.guest ? { ...prev.guest, score: 0, correctCount: 0 } : null,
-      };
+    const cur = roomRef.current;
+    const startingState: RoomStateClient = {
+      code: roomCode,
+      status: 'starting',
+      currentRound: 1,
+      totalRounds: 8,
+      currentQuestion: clientFirstQ,
+      roundDurationSec: 10,
+      roundStartTime: null,
+      timeRemainingMs: 10000,
+      lastRoundResult: null,
+      roundHistory: [],
+      updatedAt: Date.now(),
+      host: cur
+        ? { ...cur.host, score: 0, correctCount: 0 }
+        : {
+            id: playerIdRef.current,
+            name: playerInput.name,
+            avatar: playerInput.avatar,
+            score: 0,
+            correctCount: 0,
+            fastestResponseMs: null,
+            isConnected: true,
+            lastSeen: Date.now(),
+          },
+      guest: cur?.guest
+        ? { ...cur.guest, score: 0, correctCount: 0 }
+        : {
+            id: 'guest_player',
+            name: 'Friend',
+            avatar: '🦊',
+            score: 0,
+            correctCount: 0,
+            fastestResponseMs: null,
+            isConnected: true,
+            lastSeen: Date.now(),
+          },
+    };
 
-      broadcastRoomState(startingState);
-      return startingState;
-    });
+    // 2. Set local host state immediately
+    setRoom(startingState);
+
+    // 3. Publish to cross-tab channels synchronously so Guest transitions instantly
+    broadcastRoomState(startingState);
+    try {
+      localStorage.setItem(`cybermentor_room_${roomCode}`, JSON.stringify(startingState));
+      localStorage.setItem(
+        `cybermentor_action_${roomCode}`,
+        JSON.stringify({ type: 'START', timestamp: Date.now(), room: startingState, questions })
+      );
+    } catch {
+      // ignore
+    }
+
+    if (broadcastChannelRef.current) {
+      try {
+        broadcastChannelRef.current.postMessage({
+          type: 'GAME_STARTED',
+          room: startingState,
+          questions,
+        });
+      } catch {
+        // ignore
+      }
+    }
+
+    // 4. Inform server API
+    try {
+      const serverRoom = await multiplayerApi.startGame(roomCode, playerIdRef.current);
+      if (serverRoom && shouldAcceptStateUpdate(startingState, serverRoom)) {
+        setRoom(serverRoom);
+      }
+    } catch {
+      // Serverless or offline fallback handled locally
+    }
   };
 
   const submitAnswer = async (questionId: string, optionId: string) => {
@@ -555,12 +695,29 @@ export function useMultiplayerRoom(currentUser: { id?: string; name: string; ava
   useEffect(() => {
     if (!room) return;
 
+    // Retrieve synchronized questions
+    let questions = storedQuestionsRef.current;
+    if (!questions || questions.length < 8) {
+      try {
+        const saved = localStorage.getItem(`cybermentor_questions_${room.code}`);
+        if (saved) {
+          questions = JSON.parse(saved);
+          storedQuestionsRef.current = questions;
+        }
+      } catch {
+        // ignore
+      }
+    }
+    if (!questions || questions.length < 8) {
+      questions = getEightRandomQuestions();
+      storedQuestionsRef.current = questions;
+    }
+
     // 1. Starting countdown -> in_round
     if (room.status === 'starting') {
       const timer = setTimeout(() => {
         setRoom((prev) => {
           if (!prev || prev.status !== 'starting') return prev;
-          const questions = getEightRandomQuestions();
           const firstQ = questions[0];
           const activeState: RoomStateClient = {
             ...prev,
@@ -597,7 +754,7 @@ export function useMultiplayerRoom(currentUser: { id?: string; name: string; ava
           if (!prev || prev.status !== 'round_locked') return prev;
           if (prev.currentRound < prev.totalRounds) {
             const nextRound = prev.currentRound + 1;
-            const nextQ = multiplayerQuestionsPool[nextRound % multiplayerQuestionsPool.length];
+            const nextQ = questions[nextRound - 1] || multiplayerQuestionsPool[nextRound % multiplayerQuestionsPool.length];
             const nextState: RoomStateClient = {
               ...prev,
               status: 'in_round',
@@ -631,11 +788,11 @@ export function useMultiplayerRoom(currentUser: { id?: string; name: string; ava
             return overState;
           }
         });
-      }, 3000);
+      }, 2800);
 
       return () => clearTimeout(timer);
     }
-  }, [room?.status, room?.currentRound, broadcastRoomState]);
+  }, [room?.status, room?.currentRound, room?.code, broadcastRoomState]);
 
   return {
     room,

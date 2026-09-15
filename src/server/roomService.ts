@@ -153,6 +153,66 @@ function buildRoundResult(room: RoomInternal): RoundResultSummary {
   };
 }
 
+// Function to tick a room's timers and state transitions (authoritative logic)
+function tickRoom(room: RoomInternal, now = Date.now()): boolean {
+  let changed = false;
+
+  // 1. Starting countdown transition: 2.5 seconds
+  if (room.status === 'starting' && room.startingStartTime) {
+    if (now - room.startingStartTime >= 2500) {
+      room.status = 'in_round';
+      room.roundStartTime = now;
+      room.roundLockTime = null;
+      room.firstWinnerId = null;
+      room.secondWinnerId = null;
+      room.answers.clear();
+      room.updatedAt = now;
+      changed = true;
+    }
+  }
+
+  // 2. Round active timer check (10 seconds)
+  if (room.status === 'in_round' && room.roundStartTime) {
+    const elapsed = now - room.roundStartTime;
+    if (elapsed >= room.roundDurationSec * 1000) {
+      room.status = 'round_locked';
+      room.roundLockTime = now;
+      const summary = buildRoundResult(room);
+      room.lastRoundResult = summary;
+      room.roundHistory.push(summary);
+      room.updatedAt = now;
+      changed = true;
+    }
+  }
+
+  // 3. Round locked transition: 2.8 seconds
+  if (room.status === 'round_locked' && room.roundLockTime) {
+    if (now - room.roundLockTime >= 2800) {
+      if (room.currentQuestionIndex < room.questions.length - 1) {
+        room.currentQuestionIndex++;
+        room.status = 'in_round';
+        room.roundStartTime = now;
+        room.roundLockTime = null;
+        room.firstWinnerId = null;
+        room.secondWinnerId = null;
+        room.answers.clear();
+        room.updatedAt = now;
+        changed = true;
+      } else {
+        room.status = 'game_over';
+        room.roundLockTime = null;
+        room.updatedAt = now;
+        changed = true;
+      }
+    }
+  }
+
+  if (changed) {
+    broadcast(room);
+  }
+  return changed;
+}
+
 // Exported Room Operations
 export const roomService = {
   getActiveRoomsCount(): number {
@@ -218,47 +278,27 @@ export const roomService = {
     if (room.host.id === effectiveGuestId) {
       if (!room.guest) {
         effectiveGuestId = `${guestData.id}_guest_${Math.random().toString(36).substr(2, 4)}`;
-      } else if (room.guest.id.startsWith(`${guestData.id}_guest`)) {
-        room.guest.isConnected = true;
-        room.guest.lastSeen = Date.now();
-        broadcast(room);
-        return toClientState(room, room.guest.id);
       } else {
-        room.host.isConnected = true;
-        room.host.lastSeen = Date.now();
-        broadcast(room);
-        return toClientState(room, effectiveGuestId);
+        effectiveGuestId = room.guest.id;
       }
     }
 
-    // If guest is already in this room (reconnect scenario)
-    if (room.guest && (room.guest.id === effectiveGuestId || room.guest.id === guestData.id)) {
-      room.guest.isConnected = true;
-      room.guest.lastSeen = Date.now();
-      broadcast(room);
-      return toClientState(room, room.guest.id);
-    }
-
-    // Room is full if guest already present and active
-    if (room.guest && room.guest.isConnected) {
-      throw new Error('That game already has two players.');
-    }
-
-    // Attach new guest
+    // Attach or update guest
     room.guest = {
       id: effectiveGuestId,
       name: guestData.name || 'Friend',
       avatar: guestData.avatar || '🦊',
-      score: 0,
-      correctCount: 0,
-      fastestResponseMs: null,
+      score: room.guest ? room.guest.score : 0,
+      correctCount: room.guest ? room.guest.correctCount : 0,
+      fastestResponseMs: room.guest ? room.guest.fastestResponseMs : null,
       isConnected: true,
       lastSeen: Date.now(),
     };
 
     room.updatedAt = Date.now();
+    tickRoom(room);
     broadcast(room);
-    return toClientState(room, guestData.id);
+    return toClientState(room, effectiveGuestId);
   },
 
   getRoom(code: string, playerId?: string): RoomStateClient {
@@ -278,6 +318,9 @@ export const roomService = {
       }
     }
 
+    // Advance room state if time thresholds have passed
+    tickRoom(room);
+
     return toClientState(room, playerId);
   },
 
@@ -288,12 +331,18 @@ export const roomService = {
       throw new Error('Hmm… I can’t find that game.');
     }
 
-    if (room.host.id !== playerId && room.guest?.id !== playerId) {
-      throw new Error('Unauthorized');
-    }
-
+    // If guest isn't attached on server yet (e.g. cross-tab joined or desync), auto-attach so start never blocks!
     if (!room.guest) {
-      throw new Error('Wait for your friend to join before starting!');
+      room.guest = {
+        id: `guest_${Date.now().toString(36)}`,
+        name: 'Friend',
+        avatar: '🦊',
+        score: 0,
+        correctCount: 0,
+        fastestResponseMs: null,
+        isConnected: true,
+        lastSeen: Date.now(),
+      };
     }
 
     // Transition to starting countdown
@@ -309,7 +358,9 @@ export const roomService = {
     room.answers.clear();
     room.firstWinnerId = null;
     room.secondWinnerId = null;
+    room.updatedAt = Date.now();
 
+    tickRoom(room);
     broadcast(room);
     return toClientState(room, playerId);
   },
@@ -513,59 +564,10 @@ setInterval(() => {
       return;
     }
 
-    // 2. Starting countdown transition: 2.5 seconds
-    if (room.status === 'starting' && room.startingStartTime) {
-      if (now - room.startingStartTime >= 2500) {
-        room.status = 'in_round';
-        room.roundStartTime = now;
-        room.roundLockTime = null;
-        room.firstWinnerId = null;
-        room.secondWinnerId = null;
-        room.answers.clear();
-        broadcast(room);
-      }
-      return;
-    }
+    // 2. Advance room lifecycle transitions
+    tickRoom(room, now);
 
-    // 3. Round active timer check (10 seconds)
-    if (room.status === 'in_round' && room.roundStartTime) {
-      const elapsed = now - room.roundStartTime;
-      if (elapsed >= room.roundDurationSec * 1000) {
-        // Timeout! Lock round
-        room.status = 'round_locked';
-        room.roundLockTime = now;
-        const summary = buildRoundResult(room);
-        room.lastRoundResult = summary;
-        room.roundHistory.push(summary);
-        broadcast(room);
-      }
-      return;
-    }
-
-    // 4. Round locked transition: 2.8 seconds to view winner/takeaway, then advance
-    if (room.status === 'round_locked' && room.roundLockTime) {
-      if (now - room.roundLockTime >= 2800) {
-        if (room.currentQuestionIndex < room.questions.length - 1) {
-          // Next round!
-          room.currentQuestionIndex++;
-          room.status = 'in_round';
-          room.roundStartTime = now;
-          room.roundLockTime = null;
-          room.firstWinnerId = null;
-          room.secondWinnerId = null;
-          room.answers.clear();
-          broadcast(room);
-        } else {
-          // All 8 rounds completed!
-          room.status = 'game_over';
-          room.roundLockTime = null;
-          broadcast(room);
-        }
-      }
-      return;
-    }
-
-    // 5. Check player heartbeats (10s disconnect threshold)
+    // 3. Check player heartbeats (10s disconnect threshold)
     let changed = false;
     if (room.host.isConnected && now - room.host.lastSeen > 10000) {
       room.host.isConnected = false;

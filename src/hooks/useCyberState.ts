@@ -11,17 +11,19 @@ import {
   MentorInsight,
   SkillCheckResult,
   ScenarioOption,
+  MissionHistoryItem,
 } from '../types';
 import {
   initialUserProfile,
   initialSkillScores,
   learningPathsData,
-  sampleScenarios,
   initialBadges,
   initialCertificates,
   initialLeaderboard,
   defaultMentorInsight,
 } from '../data/mockData';
+import { allMissions } from '../data/missionsData';
+import { getNextMission } from '../utils/adaptiveEngine';
 import confetti from 'canvas-confetti';
 
 const STORAGE_KEY = 'cybermentor_state_v2';
@@ -35,18 +37,22 @@ interface StoredState {
   mentorInsight: MentorInsight;
   lastSkillCheck?: SkillCheckResult;
   completedScenarioIds: string[];
+  missionHistory?: MissionHistoryItem[];
 }
 
 export function useCyberState() {
   const [currentPage, setCurrentPage] = useState<ActivePage>('dashboard');
   const [selectedPathId, setSelectedPathId] = useState<string>('cyber-safety-fundamentals');
   const [selectedModuleId, setSelectedModuleId] = useState<string>('mod-phishing-social');
-  const [selectedScenarioId, setSelectedScenarioId] = useState<string>('scenario-univ-phish');
+  const [selectedScenarioId, setSelectedScenarioId] = useState<string>(() => {
+    return allMissions[0]?.id || 'mission-free-robux';
+  });
   const [lastScenarioDecision, setLastScenarioDecision] = useState<{
     scenario: ScenarioItem;
     option: ScenarioOption;
     previousScore: number;
     newScore: number;
+    hintsUsed?: number;
   } | null>(null);
 
   const [isMentorDrawerOpen, setIsMentorDrawerOpen] = useState(false);
@@ -164,6 +170,34 @@ export function useCyberState() {
     return [];
   });
 
+  // Adaptive Mission History
+  const [missionHistory, setMissionHistory] = useState<MissionHistoryItem[]>(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) {
+        const parsed: StoredState = JSON.parse(saved);
+        if (Array.isArray(parsed.missionHistory)) {
+          return parsed.missionHistory;
+        }
+        // Safe migration from existing completedScenarioIds
+        if (Array.isArray(parsed.completedScenarioIds) && parsed.completedScenarioIds.length > 0) {
+          return parsed.completedScenarioIds.map((id) => ({
+            missionId: id,
+            category: 'Scam & Phishing',
+            difficulty: 'Beginner' as const,
+            scaffoldLevel: 1 as const,
+            outcome: 'correct' as const,
+            hintsUsed: 0,
+            completedAt: new Date().toISOString(),
+          }));
+        }
+      }
+    } catch {
+      // ignore
+    }
+    return [];
+  });
+
   // Sync to local storage
   useEffect(() => {
     try {
@@ -176,20 +210,45 @@ export function useCyberState() {
         mentorInsight,
         lastSkillCheck,
         completedScenarioIds,
+        missionHistory,
       };
       localStorage.setItem(STORAGE_KEY, JSON.stringify(dataToStore));
     } catch (e) {
       console.error('Failed to sync CyberMentor state:', e);
     }
-  }, [user, skills, paths, badges, certificates, mentorInsight, lastSkillCheck, completedScenarioIds]);
+  }, [user, skills, paths, badges, certificates, mentorInsight, lastSkillCheck, completedScenarioIds, missionHistory]);
 
-  // Execute scenario decision
-  const submitScenarioDecision = useCallback((scenario: ScenarioItem, option: ScenarioOption) => {
+  // Request next adaptive mission
+  const requestNextMission = useCallback(() => {
+    const nextMission = getNextMission(user, allMissions, missionHistory, skills, selectedScenarioId);
+    setSelectedScenarioId(nextMission.id);
+    return nextMission;
+  }, [user, missionHistory, skills, selectedScenarioId]);
+
+  // Execute scenario decision with child-friendly non-punishing score
+  const submitScenarioDecision = useCallback((scenario: ScenarioItem, option: ScenarioOption, hintsUsed: number = 0) => {
     const previousScore = user.digitalTrustScore;
-    const newTrustScore = Math.max(0, Math.min(100, previousScore + option.scoreImpacts.trustScoreDelta));
-    const newXP = user.currentXP + option.scoreImpacts.xpDelta;
-    
-    // Level up calculation if applicable (e.g. 2200 for lvl 7)
+
+    // PART 11: Non-punishing scoring
+    // Optimal = +8, Partial/Fair = +2, Incorrect = +0 (Never drops visible score!)
+    let scoreGain = 0;
+    let outcome: 'correct' | 'partial' | 'incorrect' = 'incorrect';
+
+    if (option.isOptimal) {
+      scoreGain = 8;
+      outcome = 'correct';
+    } else if (option.feedback.decisionQuality === 'Fair' || option.riskLevel === 'Moderate') {
+      scoreGain = 2;
+      outcome = 'partial';
+    } else {
+      scoreGain = 0;
+      outcome = 'incorrect';
+    }
+
+    const newTrustScore = Math.min(100, previousScore + scoreGain);
+    const xpGain = option.scoreImpacts.xpDelta > 0 ? option.scoreImpacts.xpDelta : (option.isOptimal ? 60 : 25);
+    const newXP = user.currentXP + xpGain;
+
     let newLevel = user.level;
     let nextXP = user.nextLevelXP;
     if (newXP >= user.nextLevelXP) {
@@ -198,40 +257,57 @@ export function useCyberState() {
       confetti({ particleCount: 60, spread: 55, origin: { y: 0.6 } });
     }
 
-    setUser(prev => ({
+    // Update user
+    setUser((prev) => ({
       ...prev,
       digitalTrustScore: newTrustScore,
-      trustScoreDelta: prev.trustScoreDelta + (option.scoreImpacts.trustScoreDelta > 0 ? 1 : 0),
+      trustScoreDelta: prev.trustScoreDelta + (scoreGain > 0 ? 1 : 0),
       currentXP: newXP,
       level: newLevel,
       nextLevelXP: nextXP,
       scenariosCompletedCount: prev.scenariosCompletedCount + 1,
     }));
 
+    // Record in mission history
+    const historyItem: MissionHistoryItem = {
+      missionId: scenario.id,
+      category: scenario.category,
+      difficulty: scenario.difficulty,
+      scaffoldLevel: scenario.scaffoldLevel || 1,
+      outcome,
+      hintsUsed,
+      completedAt: new Date().toISOString(),
+    };
+
+    setMissionHistory((prev) => [...prev, historyItem]);
+    setCompletedScenarioIds((prev) => Array.from(new Set([...prev, scenario.id])));
+
     // Update skill category score
-    setSkills(prev =>
-      prev.map(s => {
-        if (s.name.toLowerCase().includes(option.scoreImpacts.skillCategory.toLowerCase()) || 
-            option.scoreImpacts.skillCategory.toLowerCase().includes(s.name.toLowerCase())) {
-          const nextScore = Math.max(0, Math.min(100, s.score + option.scoreImpacts.skillCategoryDelta));
+    setSkills((prev) =>
+      prev.map((s) => {
+        const matches =
+          s.name.toLowerCase().includes(scenario.category.toLowerCase()) ||
+          scenario.category.toLowerCase().includes(s.name.toLowerCase());
+        if (matches) {
+          const delta = option.isOptimal ? 10 : (outcome === 'partial' ? 3 : 0);
           return {
             ...s,
-            score: nextScore,
-            change: s.change + Math.abs(option.scoreImpacts.skillCategoryDelta),
+            score: Math.min(100, s.score + delta),
+            change: s.change + delta,
           };
         }
         return s;
       })
     );
 
-    // If optimal, check if badges should unlock
+    // Badges unlock check
     if (option.isOptimal) {
-      setBadges(prev =>
-        prev.map(b => {
+      setBadges((prev) =>
+        prev.map((b) => {
           if (b.id === 'safe-decision-maker' && !b.unlocked) {
             return { ...b, unlocked: true, unlockedDate: 'Today' };
           }
-          if (scenario.id === 'scenario-mfa-fatigue' && b.id === 'mfa-guardian' && !b.unlocked) {
+          if (b.id === 'first-steps' && !b.unlocked) {
             return { ...b, unlocked: true, unlockedDate: 'Today' };
           }
           return b;
@@ -239,13 +315,12 @@ export function useCyberState() {
       );
     }
 
-    setCompletedScenarioIds(prev => Array.from(new Set([...prev, scenario.id])));
-
     setLastScenarioDecision({
       scenario,
       option,
       previousScore,
       newScore: newTrustScore,
+      hintsUsed,
     });
 
     // Navigate to AI feedback page
@@ -315,6 +390,7 @@ export function useCyberState() {
     setMentorInsight(defaultMentorInsight);
     setLastSkillCheck(undefined);
     setCompletedScenarioIds([]);
+    setMissionHistory([]);
     setCurrentPage('dashboard');
   }, []);
 
@@ -340,6 +416,8 @@ export function useCyberState() {
     setMentorInsight,
     lastSkillCheck,
     completedScenarioIds,
+    missionHistory,
+    requestNextMission,
     selectedPathId,
     setSelectedPathId,
     selectedModuleId,
@@ -362,6 +440,7 @@ export function useCyberState() {
         ? { ...u, trustScore: user.digitalTrustScore, xp: user.currentXP, level: user.level } 
         : u
     ),
-    scenarios: sampleScenarios,
+    scenarios: allMissions,
+    allMissions,
   };
 }

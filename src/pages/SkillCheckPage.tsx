@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { ActivePage, SkillCheckResult } from '../types';
 import { initialSkillCheckQuestions } from '../data/mockData';
-import { TrustScoreGauge } from '../components/common/TrustScoreGauge';
+import { getLearnerLevel } from '../utils/levelSystem';
 import {
   ArrowRight,
   ArrowLeft,
@@ -11,8 +11,11 @@ import {
   Compass,
   Zap,
   CheckCircle2,
+  Shield,
+  Lock,
 } from 'lucide-react';
 import { ByteMascot } from '../components/common/ByteMascot';
+import confetti from 'canvas-confetti';
 
 interface SkillCheckPageProps {
   onNavigate: (page: ActivePage, params?: { pathId?: string }) => void;
@@ -57,15 +60,15 @@ export const SkillCheckPage: React.FC<SkillCheckPageProps> = ({
       const newResult: SkillCheckResult = {
         completedAt: 'Just now',
         digitalTrustScore: calculatedScore,
-        strengths: ['Password Awareness', 'Privacy Awareness'],
-        needsImprovement: ['Phishing Detection', 'Social Engineering'],
+        strengths: ['Password Safety', 'Privacy Habits'],
+        needsImprovement: ['Scam Spotting', 'Social Engineering'],
         recommendedPathId: 'cyber-safety-fundamentals',
         recommendedPathTitle: 'Cyber Safety Fundamentals',
         categoryScores: {
           'Password Security': 86,
           'Privacy Awareness': 74,
-          'Phishing Detection': 61,
-          'Social Engineering': 54,
+          'Phishing Detection': 62,
+          'Social Engineering': 56,
           'Safe Browsing': 78,
         },
       };
@@ -73,6 +76,12 @@ export const SkillCheckPage: React.FC<SkillCheckPageProps> = ({
       setResult(newResult);
       setIsFinished(true);
       onCompleteSkillCheck(newResult);
+
+      confetti({
+        particleCount: 50,
+        spread: 60,
+        origin: { y: 0.6 },
+      });
     }
   };
 
@@ -83,22 +92,36 @@ export const SkillCheckPage: React.FC<SkillCheckPageProps> = ({
     setResult(null);
   };
 
+  const levelInfo = result ? getLearnerLevel(result.digitalTrustScore) : null;
+
   return (
     <div className="p-4 sm:p-6 lg:p-8 flex flex-col justify-center items-center text-[#243047] font-sans">
       <div className="w-full max-w-2xl space-y-6">
         {!isFinished ? (
-          /* Active Assessment Flow */
+          /* Active 5-Challenge Flow */
           <div className="space-y-6">
-            {/* Header & Progress Bar */}
-            <div className="space-y-2">
+            {/* Header & Byte Mascot */}
+            <div className="text-center space-y-2">
+              <div className="inline-flex justify-center mb-1">
+                <ByteMascot mood="happy" size="md" />
+              </div>
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-50 border border-blue-200 text-xs font-black text-[#4F7CFF]">
+                <Zap className="w-3.5 h-3.5" />
+                <span>QUICK CYBER CHECK</span>
+              </div>
+              <h2 className="text-xl sm:text-2xl font-black text-[#243047]">
+                Let's see what you already know!
+              </h2>
+              <p className="text-xs text-slate-500 font-medium">
+                5 quick challenges so Byte can find the best missions for you.
+              </p>
+            </div>
+
+            {/* Friendly Progress Bar */}
+            <div className="space-y-1.5">
               <div className="flex items-center justify-between text-xs font-bold text-slate-500">
-                <span className="flex items-center gap-1.5 text-[#4F7CFF]">
-                  <Zap className="w-4 h-4" />
-                  <span>QUICK CYBER CHECK</span>
-                </span>
-                <span>
-                  Challenge {currentIndex + 1} of {questions.length}
-                </span>
+                <span className="text-[#4F7CFF]">Challenge {currentIndex + 1} of {questions.length}</span>
+                <span>{progressPercent}%</span>
               </div>
               <div className="w-full h-3 bg-slate-200/80 rounded-full overflow-hidden p-0.5">
                 <div
@@ -114,18 +137,18 @@ export const SkillCheckPage: React.FC<SkillCheckPageProps> = ({
                 <span className="text-xs font-bold px-3 py-1 rounded-full bg-blue-50 text-[#4F7CFF] border border-blue-100">
                   {currentQ.category}
                 </span>
-                <span className="text-xs text-slate-600 font-bold">
-                  Quest #{currentQ.id}
+                <span className="text-xs text-slate-400 font-bold">
+                  Challenge #{currentIndex + 1}
                 </span>
               </div>
 
               {/* Realistic situation box */}
-              <div className="p-5 rounded-2xl bg-slate-50 border border-slate-200/90 text-sm sm:text-base text-[#243047] leading-relaxed font-medium">
+              <div className="p-5 rounded-2xl bg-slate-50 border border-slate-200/90 text-sm sm:text-base text-[#243047] leading-relaxed font-semibold">
                 "{currentQ.scenario}"
               </div>
 
-              <p className="text-xs font-bold text-slate-500">
-                What would you choose to do?
+              <p className="text-xs font-bold text-slate-600">
+                What's the safe choice to make?
               </p>
 
               {/* Options */}
@@ -171,11 +194,11 @@ export const SkillCheckPage: React.FC<SkillCheckPageProps> = ({
                 <button
                   onClick={handleNext}
                   disabled={!selectedAnswers[currentQ.id]}
-                  className="px-6 py-2.5 rounded-xl bg-[#4F7CFF] hover:bg-[#3D6CE6] disabled:opacity-40 text-white font-bold text-xs transition-all flex items-center gap-2 shadow-xs"
+                  className="px-6 py-2.5 rounded-xl bg-[#4F7CFF] hover:bg-[#3D6CE6] disabled:opacity-40 text-white font-black text-xs transition-all flex items-center gap-2 shadow-sm"
                 >
                   <span>
                     {currentIndex === questions.length - 1
-                      ? 'See My Cyber Profile'
+                      ? 'Finish & See Profile'
                       : 'Next Challenge'}
                   </span>
                   <ArrowRight className="w-4 h-4" />
@@ -184,105 +207,97 @@ export const SkillCheckPage: React.FC<SkillCheckPageProps> = ({
             </div>
           </div>
         ) : (
-          /* Assessment Results Profile Screen */
+          /* Profile Created Results Screen */
           <div className="space-y-6 animate-in fade-in duration-300">
             <div className="text-center space-y-2">
               <div className="flex justify-center">
-                <ByteMascot mood="excited" size="lg" />
+                <ByteMascot mood="proud" size="lg" />
               </div>
-              <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-[#243047]">
-                Your Cyber Superhero Profile
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-xs font-black text-emerald-600">
+                <Sparkles className="w-3.5 h-3.5" />
+                <span>CHECK COMPLETE</span>
+              </div>
+              <h1 className="text-3xl font-black text-[#243047]">
+                🎉 Nice work!
               </h1>
               <p className="text-xs sm:text-sm text-slate-600 max-w-md mx-auto">
-                Awesome work completing the check! Here are your cyber instincts and superpowers.
+                Here is your personalized Cyber Profile. Byte has selected your first mission!
               </p>
             </div>
 
-            {/* Results Card */}
+            {/* Profile Overview Card */}
             <div className="p-6 sm:p-8 rounded-3xl bg-white border border-slate-200 shadow-sm space-y-6">
-              {/* Score Display Gauge */}
-              <div className="p-6 rounded-2xl bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100">
-                <TrustScoreGauge
-                  score={result?.digitalTrustScore ?? 74}
-                  delta={result?.digitalTrustScore ?? 74}
-                  size="md"
-                  showWhyDetail={true}
-                />
-              </div>
-
-              {/* Strengths & Next Skills to practice */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="p-4 rounded-2xl bg-emerald-50/70 border border-emerald-200 space-y-2">
-                  <div className="flex items-center gap-2 text-emerald-800 text-xs font-black uppercase">
-                    <ShieldCheck className="w-4 h-4 text-emerald-600" />
-                    <span>Your Superpowers</span>
-                  </div>
-                  <ul className="space-y-1.5 text-xs text-emerald-950 font-medium">
-                    {result?.strengths.map((s, i) => (
-                      <li key={i} className="flex items-center gap-2">
-                        <span className="text-emerald-600">✓</span>
-                        <span>{s}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-
-                <div className="p-4 rounded-2xl bg-amber-50/70 border border-amber-200 space-y-2">
-                  <div className="flex items-center gap-2 text-amber-800 text-xs font-black uppercase">
-                    <Sparkles className="w-4 h-4 text-amber-600" />
-                    <span>Next Skills to Level Up</span>
-                  </div>
-                  <ul className="space-y-1.5 text-xs text-amber-950 font-medium">
-                    {result?.needsImprovement.map((w, i) => (
-                      <li key={i} className="flex items-center gap-2">
-                        <span className="text-amber-600">★</span>
-                        <span>{w}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              </div>
-
-              {/* Recommended Adventure Box */}
-              <div className="p-5 rounded-2xl bg-gradient-to-r from-blue-500 to-[#8B6CFF] text-white flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-sm">
+              <div className="flex items-center justify-between border-b border-slate-100 pb-4">
                 <div>
-                  <span className="text-[11px] font-black text-yellow-300 uppercase tracking-wider block mb-0.5">
-                    RECOMMENDED ADVENTURE FOR YOU
+                  <span className="text-xs font-black text-slate-400 uppercase tracking-wider block">
+                    Your Cyber Profile
                   </span>
-                  <div className="text-base font-extrabold text-white">
-                    {result?.recommendedPathTitle || 'Cyber Safety Fundamentals'}
-                  </div>
-                  <p className="text-xs text-blue-100 mt-0.5">
-                    Dive into fun missions to master spotting scams and tricky messages!
-                  </p>
+                  <h3 className="text-lg font-black text-[#243047]">
+                    Level: {levelInfo?.levelBadge || '⚡ Cyber Scout'}
+                  </h3>
                 </div>
-                <button
-                  onClick={() =>
-                    onNavigate('learning-paths', {
-                      pathId: result?.recommendedPathId || 'cyber-safety-fundamentals',
-                    })
-                  }
-                  className="px-5 py-2.5 rounded-xl bg-white hover:bg-blue-50 text-[#4F7CFF] font-black text-xs transition-all shrink-0 flex items-center gap-2 shadow-xs"
-                >
-                  <Compass className="w-4 h-4" />
-                  <span>Start Adventure</span>
-                </button>
+                <div className="text-right">
+                  <span className="text-xs font-bold text-slate-400 block">
+                    Cyber Smart Score
+                  </span>
+                  <div className="text-3xl font-black text-[#4F7CFF]">
+                    {result?.digitalTrustScore || 72} ⭐
+                  </div>
+                </div>
               </div>
 
-              {/* Retake / Home links */}
-              <div className="flex items-center justify-between pt-2 text-xs font-bold">
+              {/* Strengths & Practice Focus */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 space-y-1.5">
+                  <div className="flex items-center gap-2 text-emerald-800 text-xs font-black">
+                    <ShieldCheck className="w-4 h-4 text-emerald-600" />
+                    <span>🔐 Strong at:</span>
+                  </div>
+                  <p className="text-xs text-emerald-950 font-bold">
+                    {result?.strengths[0] || 'Password Safety'}
+                  </p>
+                  <span className="text-[11px] text-emerald-800 font-medium">
+                    You made great instincts protecting your credentials!
+                  </span>
+                </div>
+
+                <div className="p-4 rounded-2xl bg-amber-50 border border-amber-200 space-y-1.5">
+                  <div className="flex items-center gap-2 text-amber-800 text-xs font-black">
+                    <Sparkles className="w-4 h-4 text-amber-600" />
+                    <span>🎣 Practice more:</span>
+                  </div>
+                  <p className="text-xs text-amber-950 font-bold">
+                    {result?.needsImprovement[0] || 'Scam Spotting'}
+                  </p>
+                  <span className="text-[11px] text-amber-800 font-medium">
+                    Byte will find fun missions to help you spot sneaky tricks!
+                  </span>
+                </div>
+              </div>
+
+              {/* Byte Callout */}
+              <div className="p-4 rounded-2xl bg-blue-50/80 border border-blue-200 flex items-center gap-3 text-left">
+                <span className="text-2xl shrink-0">🤖</span>
+                <p className="text-xs text-slate-700 font-medium leading-relaxed">
+                  <strong className="text-[#243047]">Byte says:</strong> "I picked your first adaptive mission based on your check results! Let's get started!"
+                </p>
+              </div>
+
+              {/* Primary CTA: Start Today's Mission */}
+              <button
+                onClick={() => onNavigate('dashboard')}
+                className="w-full py-4 rounded-2xl bg-[#4F7CFF] hover:bg-[#3D6CE6] text-white font-black text-sm flex items-center justify-center gap-2 transition-all shadow-md active:scale-98"
+              >
+                <span>Let's Go to Today's Mission 🚀</span>
+                <ArrowRight className="w-4 h-4" />
+              </button>
+
+              <div className="pt-1 text-center">
                 <button
                   onClick={handleRetake}
-                  className="text-slate-500 hover:text-slate-800 flex items-center gap-1.5 transition-colors"
+                  className="text-xs text-slate-400 hover:text-slate-600 font-semibold transition-colors"
                 >
-                  <RefreshCw className="w-3.5 h-3.5" />
-                  <span>Try Check Again</span>
-                </button>
-                <button
-                  onClick={() => onNavigate('dashboard')}
-                  className="text-[#4F7CFF] hover:underline"
-                >
-                  Go to Adventure Home →
+                  Retake Quick Check
                 </button>
               </div>
             </div>

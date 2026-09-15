@@ -1,6 +1,6 @@
 import React from 'react';
 import { ActivePage, UserProfile } from '../../types';
-import { Flame, Menu, Shield, Zap, Sparkles, Trophy } from 'lucide-react';
+import { Flame, Menu, Shield, Zap, Sparkles, Trophy, Users } from 'lucide-react';
 import { ByteMascot } from '../common/ByteMascot';
 
 interface NavbarProps {
@@ -23,12 +23,12 @@ export const Navbar: React.FC<NavbarProps> = ({
   const current = activePage || currentPage || 'dashboard';
   const safeUser = user || {
     name: 'Saurav',
-    avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
-    level: 0,
-    currentXP: 0,
-    digitalTrustScore: 0,
+    avatar: '🤖',
+    level: 1,
+    currentXP: 100,
+    digitalTrustScore: 72,
     trustScoreDelta: 0,
-    streakDays: 0,
+    streakDays: 1,
   };
 
   const getPageTitle = () => {
@@ -36,31 +36,29 @@ export const Navbar: React.FC<NavbarProps> = ({
       case 'dashboard':
         return { label: 'Adventure Home', icon: '🏠' };
       case 'learning-paths':
-        return { label: 'Learning Adventures', icon: '🗺️' };
+        return { label: 'Learn', icon: '📖' };
       case 'module-detail':
         return { label: 'Learning Zone', icon: '📖' };
       case 'interactive-scenario':
         return { label: 'Cyber Missions', icon: '🎯' };
+      case 'multiplayer':
+        return { label: 'Play With a Friend', icon: '👥' };
       case 'ai-feedback':
         return { label: 'Mission Results', icon: '✨' };
       case 'skill-check':
         return { label: 'Quick Cyber Check', icon: '⚡' };
-      case 'progress-analytics':
-        return { label: 'Your Progress', icon: '📈' };
       case 'badges':
-        return { label: 'Badges & Rewards', icon: '🏆' };
-      case 'leaderboard':
-        return { label: 'Weekly Challenge', icon: '🌟' };
+        return { label: 'Rewards & Trophies', icon: '🏆' };
       case 'profile':
-        return { label: 'Your Cyber Profile', icon: '👤' };
-      case 'settings':
-        return { label: 'Settings', icon: '⚙️' };
+        return { label: 'Your Profile', icon: '👤' };
       default:
-        return { label: 'Cyber Adventure', icon: '🛡️' };
+        return { label: 'CyberMentor', icon: '🛡️' };
     }
   };
 
   const currentInfo = getPageTitle();
+  const isImageAvatar =
+    safeUser.avatar?.startsWith('http') || safeUser.avatar?.startsWith('data:image/');
 
   return (
     <header className="h-16 bg-white border-b border-slate-200 px-4 sm:px-6 flex items-center justify-between sticky top-0 z-30 select-none text-[#243047] shadow-xs">
@@ -83,7 +81,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             <h1 className="text-sm sm:text-base font-bold text-[#243047] leading-tight">
               {currentInfo.label}
             </h1>
-            <p className="text-[11px] text-slate-600 hidden sm:block">
+            <p className="text-[11px] text-slate-500 hidden sm:block">
               Cyber adventure & safety skills
             </p>
           </div>
@@ -138,16 +136,21 @@ export const Navbar: React.FC<NavbarProps> = ({
         {/* User Avatar with Level Ring */}
         <button
           onClick={() => onNavigate('profile')}
-          className="relative rounded-full p-0.5 border-2 border-[#4F7CFF] hover:scale-105 transition-transform"
+          className="relative w-8 h-8 rounded-full border-2 border-[#4F7CFF] hover:scale-105 transition-transform flex items-center justify-center bg-blue-50 overflow-hidden"
           title={`View profile (${safeUser.name})`}
         >
-          <img
-            src={safeUser.avatar}
-            alt={safeUser.name}
-            className="w-8 h-8 rounded-full object-cover"
-          />
-          <span className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-[#8B6CFF] text-white text-[9px] font-black flex items-center justify-center border border-white">
-            {safeUser.level}
+          {isImageAvatar ? (
+            <img
+              src={safeUser.avatar}
+              alt={safeUser.name}
+              className="w-full h-full object-cover"
+              referrerPolicy="no-referrer"
+            />
+          ) : (
+            <span className="text-lg leading-none">{safeUser.avatar || '🤖'}</span>
+          )}
+          <span className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full bg-[#8B6CFF] text-white text-[8px] font-black flex items-center justify-center border border-white">
+            {safeUser.level || 1}
           </span>
         </button>
       </div>

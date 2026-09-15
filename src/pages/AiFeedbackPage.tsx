@@ -1,19 +1,16 @@
 import React, { useState } from 'react';
 import { ActivePage, ScenarioItem, ScenarioOption } from '../types';
-import { sampleScenarios } from '../data/mockData';
+import { allMissions } from '../data/missionsData';
 import {
   ArrowRight,
   Sparkles,
   Zap,
-  RotateCcw,
   CheckCircle2,
-  XCircle,
   HelpCircle,
   Shield,
   ChevronDown,
   ChevronUp,
   Terminal,
-  ExternalLink,
 } from 'lucide-react';
 import { ByteMascot } from '../components/common/ByteMascot';
 
@@ -23,25 +20,39 @@ interface AiFeedbackPageProps {
     option: ScenarioOption;
     previousScore: number;
     newScore: number;
+    hintsUsed?: number;
   } | null;
   onNavigate: (page: ActivePage, params?: { scenarioId?: string }) => void;
+  onRequestNextMission?: () => void;
   onOpenMentor: () => void;
 }
 
 export const AiFeedbackPage: React.FC<AiFeedbackPageProps> = ({
   decisionData,
   onNavigate,
+  onRequestNextMission,
   onOpenMentor,
 }) => {
-  const scenario = decisionData?.scenario || sampleScenarios[0];
-  const option = decisionData?.option || scenario.options[2];
+  const scenario = decisionData?.scenario || allMissions[0];
+  const option = decisionData?.option || scenario.options[1];
   const previousScore = decisionData?.previousScore ?? 74;
   const newScore = decisionData?.newScore ?? (option.isOptimal ? 82 : 74);
 
   const { feedback, scoreImpacts } = option;
   const isOptimal = option.isOptimal;
+  const isPartial = !isOptimal && (feedback.decisionQuality === 'Fair' || option.riskLevel === 'Moderate');
 
   const [showTechnicalDetails, setShowTechnicalDetails] = useState(false);
+
+  // Score reward text
+  const scoreReward = isOptimal ? 8 : (isPartial ? 2 : 0);
+
+  const handleNextMission = () => {
+    if (onRequestNextMission) {
+      onRequestNextMission();
+    }
+    onNavigate('interactive-scenario');
+  };
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 space-y-6 max-w-4xl mx-auto text-[#243047] font-sans">
@@ -50,29 +61,31 @@ export const AiFeedbackPage: React.FC<AiFeedbackPageProps> = ({
         className={`rounded-3xl p-6 sm:p-8 border-2 shadow-sm relative overflow-hidden transition-all ${
           isOptimal
             ? 'bg-gradient-to-r from-emerald-50 via-teal-50 to-blue-50 border-emerald-300'
+            : isPartial
+            ? 'bg-gradient-to-r from-blue-50 via-indigo-50 to-purple-50 border-blue-300'
             : 'bg-gradient-to-r from-amber-50 via-orange-50 to-yellow-50 border-amber-300'
         }`}
       >
         <div className="flex flex-col sm:flex-row items-center sm:items-start gap-5">
-          <ByteMascot mood={isOptimal ? 'excited' : 'thinking'} size="lg" />
+          <ByteMascot mood={isOptimal ? 'excited' : (isPartial ? 'cheering' : 'thinking')} size="lg" />
 
           <div className="space-y-2 text-center sm:text-left flex-1">
             <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider bg-white/80 border border-slate-200">
               {isOptimal ? (
-                <>
-                  <span className="text-emerald-600">🎯 MISSION ACCOMPLISHED</span>
-                </>
+                <span className="text-emerald-700">🎯 MISSION ACCOMPLISHED</span>
+              ) : isPartial ? (
+                <span className="text-blue-700">👍 NICE THINKING</span>
               ) : (
-                <>
-                  <span className="text-amber-700">🌱 PRACTICE MAKES PERFECT</span>
-                </>
+                <span className="text-amber-800">💡 LEARNING OPPORTUNITY</span>
               )}
             </div>
 
             <h1 className="text-2xl sm:text-3xl font-black text-[#243047]">
               {isOptimal
                 ? '🎉 Great catch! You spotted the trick.'
-                : '😬 Oops! That link was a trap.'}
+                : isPartial
+                ? "👍 Nice thinking! You're almost there."
+                : '💡 Not quite! But mistakes help us learn.'}
             </h1>
 
             <p className="text-sm sm:text-base text-slate-700 leading-relaxed font-medium">
@@ -85,8 +98,13 @@ export const AiFeedbackPage: React.FC<AiFeedbackPageProps> = ({
                 <Shield className="w-4 h-4 text-[#4F7CFF]" />
                 <span>Cyber Smart Score:</span>
                 <span className="text-emerald-700 font-black">
-                  +{isOptimal ? 8 : 2} ⭐
+                  +{scoreReward} ⭐
                 </span>
+                {!isOptimal && !isPartial && (
+                  <span className="text-slate-500 font-normal text-[11px] ml-1">
+                    (No score drop!)
+                  </span>
+                )}
               </div>
 
               <div className="px-3.5 py-1.5 rounded-full bg-purple-100 border border-purple-200 text-xs font-bold text-purple-800 shadow-2xs flex items-center gap-1.5">
@@ -129,34 +147,35 @@ export const AiFeedbackPage: React.FC<AiFeedbackPageProps> = ({
 
             <div className="p-4 rounded-2xl bg-emerald-50/60 border border-emerald-100 space-y-1">
               <strong className="text-emerald-900 font-bold block text-xs uppercase tracking-wide">
-                What you did well
+                What to do next time
               </strong>
               <p className="text-slate-700 leading-relaxed text-xs">
-                {feedback.whatYouDidWell}
+                {feedback.nextStepRecommendation || feedback.whatYouDidWell}
               </p>
             </div>
           </div>
         </div>
 
-        {/* Section: What would happen in real life */}
-        <div className="p-5 rounded-2xl bg-amber-50/60 border border-amber-200/80 space-y-2">
+        {/* Section: Byte's Golden Rule */}
+        <div className="p-5 rounded-2xl bg-amber-50/70 border border-amber-200 space-y-2">
           <div className="flex items-center gap-2 text-xs font-black text-amber-900 uppercase tracking-wider">
-            <span>🌍</span>
-            <span>WHAT WOULD HAPPEN IN REAL LIFE</span>
+            <span>🌟</span>
+            <span>BYTE’S GOLDEN TAKEAWAY</span>
           </div>
-          <p className="text-xs sm:text-sm text-amber-950 leading-relaxed">
-            In the real world, this exact trick was used by scammers to send fake messages claiming student portals were expiring. Students who reported the message or logged in directly from their bookmarks stopped the scam in its tracks!
+          <p className="text-xs sm:text-sm text-amber-950 leading-relaxed font-medium">
+            {scenario.educationalTakeaway ||
+              'Scammers love to create urgency or offer free rewards. Whenever a message asks you to act fast or give away passwords, pause and verify with an official source!'}
           </p>
         </div>
 
-        {/* Section: Want to know the technical details? (Expandable) */}
+        {/* Expandable Technical Details for curious students */}
         <div className="pt-2 border-t border-slate-100">
           <button
             onClick={() => setShowTechnicalDetails(!showTechnicalDetails)}
             className="inline-flex items-center gap-2 text-xs font-bold text-[#4F7CFF] hover:text-[#3862D9] transition-colors"
           >
             <Sparkles className="w-4 h-4 text-amber-500" />
-            <span>Want to see the technical security details?</span>
+            <span>Want to see deeper cybersecurity clues?</span>
             {showTechnicalDetails ? (
               <ChevronUp className="w-4 h-4" />
             ) : (
@@ -169,18 +188,20 @@ export const AiFeedbackPage: React.FC<AiFeedbackPageProps> = ({
               <div className="flex items-center justify-between text-[11px] text-slate-500">
                 <span className="font-bold flex items-center gap-1.5">
                   <Terminal className="w-3.5 h-3.5 text-[#4F7CFF]" />
-                  CYBER FORENSIC AUDIT
+                  MISSION TELEMETRY
                 </span>
-                <span>MITRE ATT&CK T1566.002</span>
+                <span>Category: {scenario.category}</span>
               </div>
               <p className="font-sans text-xs text-slate-700 leading-normal">
                 {feedback.watchOutFor}
               </p>
-              <div className="p-3 rounded-xl bg-[#0a0f1d] text-slate-200 text-[11px] leading-relaxed">
-                <div>Attack Vector: Reverse-proxy adversary-in-the-middle (AiTM) phishing</div>
-                <div>Domain: auth-portal-verify.org (DMARC policy: softfail)</div>
-                <div>Mitigation: FIDO2 WebAuthn authentication; URL hostname boundary parsing</div>
-              </div>
+              {scenario.threatActor && (
+                <div className="p-3 rounded-xl bg-[#0a0f1d] text-slate-200 text-[11px] leading-relaxed">
+                  <div>Simulated Threat: {scenario.threatActor}</div>
+                  <div>Difficulty Scaffold: Level {scenario.scaffoldLevel} of 5</div>
+                  <div>Environment: {scenario.environmentType}</div>
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -200,14 +221,14 @@ export const AiFeedbackPage: React.FC<AiFeedbackPageProps> = ({
               className="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-blue-50 hover:bg-blue-100 text-[#4F7CFF] font-bold text-xs border border-blue-200 flex items-center justify-center gap-1.5 transition-colors"
             >
               <ByteMascot mood="thinking" size="xs" />
-              <span>Ask Byte About This</span>
+              <span>Ask Byte</span>
             </button>
 
             <button
-              onClick={() => onNavigate('interactive-scenario')}
-              className="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-[#4F7CFF] hover:bg-[#3D6CE6] text-white font-bold text-xs shadow-xs hover:shadow-md flex items-center justify-center gap-2 transition-all"
+              onClick={handleNextMission}
+              className="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-[#4F7CFF] hover:bg-[#3D6CE6] text-white font-bold text-xs shadow-md hover:shadow-lg flex items-center justify-center gap-2 transition-all"
             >
-              <span>Try Next Mission</span>
+              <span>Next Mission 🚀</span>
               <ArrowRight className="w-4 h-4" />
             </button>
           </div>

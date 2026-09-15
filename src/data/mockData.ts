@@ -95,6 +95,7 @@ export const sampleScenarios: ScenarioItem[] = [
     title: 'Urgent Account Suspension Notice',
     category: 'Phishing Detection',
     difficulty: 'Beginner',
+    scaffoldLevel: 1,
     estimatedMinutes: 4,
     context:
       'Your university email account receives an unexpected alert claiming immediate loss of your student portal access unless identity verification occurs within the hour.',
@@ -223,6 +224,7 @@ Central Campus IT Administration`,
     title: 'Late-Night Multi-Factor Push Storm',
     category: 'Password & Authentication Security',
     difficulty: 'Intermediate',
+    scaffoldLevel: 3,
     estimatedMinutes: 5,
     context:
       'It is 11:30 PM. Your mobile authenticator app suddenly triggers 4 rapid push notifications asking: "Did you just sign in to University Canvas LMS in Frankfurt, Germany?"',
@@ -317,6 +319,7 @@ Central Campus IT Administration`,
     title: 'The "Department Budget 2025" USB Drive',
     category: 'Social Engineering',
     difficulty: 'Beginner',
+    scaffoldLevel: 2,
     estimatedMinutes: 4,
     context:
       'While studying in the campus computer lab, you discover a high-capacity metallic USB flash drive with a handwritten label reading "Chemistry Faculty Salaries & Exam Drafts Q2".',

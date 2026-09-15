@@ -2,13 +2,11 @@ import React from 'react';
 import { ActivePage, UserProfile } from '../../types';
 import {
   Home,
-  Map,
+  BookOpen,
   Target,
+  Users,
   Trophy,
-  Zap,
-  BarChart2,
-  Settings,
-  Sparkles,
+  User,
   ChevronRight,
   ExternalLink,
 } from 'lucide-react';
@@ -32,25 +30,19 @@ export const Sidebar: React.FC<SidebarProps> = ({
 }) => {
   const current = activePage || currentPage || 'dashboard';
 
-  // Primary navigation (Duolingo / game style)
-  const primaryNav = [
+  // The 6 clean consumer-learning nav items
+  const mainNav = [
     { id: 'dashboard' as ActivePage, label: 'Home', icon: Home, color: 'text-[#4F7CFF]' },
-    { id: 'learning-paths' as ActivePage, label: 'Learn', icon: Map, color: 'text-[#40C98A]' },
+    { id: 'learning-paths' as ActivePage, label: 'Learn', icon: BookOpen, color: 'text-[#40C98A]' },
     { id: 'interactive-scenario' as ActivePage, label: 'Missions', icon: Target, color: 'text-[#FF6B6B]' },
+    { id: 'multiplayer' as ActivePage, label: 'Play', icon: Users, color: 'text-[#8B6CFF]' },
     { id: 'badges' as ActivePage, label: 'Rewards', icon: Trophy, color: 'text-[#FFC857]' },
-  ];
-
-  // Secondary tools & activities
-  const secondaryNav = [
-    { id: 'skill-check' as ActivePage, label: 'Quick Cyber Check', icon: Zap },
-    { id: 'progress-analytics' as ActivePage, label: 'My Progress', icon: BarChart2 },
-    { id: 'leaderboard' as ActivePage, label: 'Weekly Challenge', icon: Sparkles },
-    { id: 'settings' as ActivePage, label: 'Settings', icon: Settings },
+    { id: 'profile' as ActivePage, label: 'Profile', icon: User, color: 'text-[#36B37E]' },
   ];
 
   return (
     <aside className="w-64 bg-white border-r border-slate-200 flex flex-col h-screen shrink-0 sticky top-0 select-none text-[#243047] z-20 shadow-xs hidden lg:flex">
-      {/* Brand Header with App Logo & Byte Accent */}
+      {/* Brand Header */}
       <div className="p-5 border-b border-slate-100 flex items-center justify-between">
         <button
           onClick={() => onNavigate('dashboard')}
@@ -78,71 +70,39 @@ export const Sidebar: React.FC<SidebarProps> = ({
         </button>
       </div>
 
-      {/* Main Nav Scrollable Body */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-6">
-        {/* Core Game Destinations */}
-        <div className="space-y-1.5">
-          <span className="px-3 text-[11px] font-bold text-slate-600 uppercase tracking-wider block mb-2">
-            Main Adventure
-          </span>
-          {primaryNav.map((item) => {
-            const Icon = item.icon;
-            const isActive =
-              current === item.id ||
-              (item.id === 'learning-paths' && current === 'module-detail') ||
-              (item.id === 'interactive-scenario' && current === 'ai-feedback');
+      {/* Main Nav Items */}
+      <div className="flex-1 overflow-y-auto p-4 space-y-1.5">
+        {mainNav.map((item) => {
+          const Icon = item.icon;
+          const isActive =
+            current === item.id ||
+            (item.id === 'learning-paths' && current === 'module-detail') ||
+            (item.id === 'interactive-scenario' && current === 'ai-feedback');
 
-            return (
-              <button
-                key={item.id}
-                onClick={() => onNavigate(item.id)}
-                className={`w-full flex items-center justify-between px-3.5 py-3 rounded-2xl font-bold text-sm transition-all duration-150 ${
-                  isActive
-                    ? 'bg-blue-50 text-[#4F7CFF] shadow-xs translate-x-1'
-                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
-                }`}
-              >
-                <div className="flex items-center gap-3">
-                  <div
-                    className={`w-8 h-8 rounded-xl flex items-center justify-center transition-colors ${
-                      isActive ? 'bg-blue-500 text-white shadow-xs' : 'bg-slate-100 text-slate-600'
-                    }`}
-                  >
-                    <Icon className="w-4 h-4" />
-                  </div>
-                  <span>{item.label}</span>
+          return (
+            <button
+              key={item.id}
+              onClick={() => onNavigate(item.id)}
+              className={`w-full flex items-center justify-between px-3.5 py-3 rounded-2xl font-bold text-sm transition-all duration-150 ${
+                isActive
+                  ? 'bg-blue-50 text-[#4F7CFF] shadow-xs translate-x-1'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+              }`}
+            >
+              <div className="flex items-center gap-3">
+                <div
+                  className={`w-9 h-9 rounded-xl flex items-center justify-center transition-colors ${
+                    isActive ? 'bg-blue-500 text-white shadow-xs' : 'bg-slate-100 text-slate-600'
+                  }`}
+                >
+                  <Icon className="w-4 h-4" />
                 </div>
-                {isActive && <ChevronRight className="w-4 h-4 text-[#4F7CFF]" />}
-              </button>
-            );
-          })}
-        </div>
-
-        {/* Secondary Exploration Tools */}
-        <div className="space-y-1">
-          <span className="px-3 text-[11px] font-bold text-slate-600 uppercase tracking-wider block mb-2">
-            Extras & Quests
-          </span>
-          {secondaryNav.map((item) => {
-            const Icon = item.icon;
-            const isActive = current === item.id;
-
-            return (
-              <button
-                key={item.id}
-                onClick={() => onNavigate(item.id)}
-                className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl font-medium text-xs transition-colors ${
-                  isActive
-                    ? 'bg-slate-100 text-[#4F7CFF] font-bold'
-                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
-                }`}
-              >
-                <Icon className={`w-4 h-4 ${isActive ? 'text-[#4F7CFF]' : 'text-slate-600'}`} />
                 <span>{item.label}</span>
-              </button>
-            );
-          })}
-        </div>
+              </div>
+              {isActive && <ChevronRight className="w-4 h-4 text-[#4F7CFF]" />}
+            </button>
+          );
+        })}
       </div>
 
       {/* Byte Buddy Mascot Callout in Footer */}
@@ -154,7 +114,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               <span className="text-xs font-bold text-[#243047] block">
                 Meet Byte!
               </span>
-              <span className="text-[11px] text-slate-600 block">
+              <span className="text-[11px] text-slate-500 block">
                 Your cyber safety buddy
               </span>
             </div>

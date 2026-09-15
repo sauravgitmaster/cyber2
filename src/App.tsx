@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useCyberState } from './hooks/useCyberState';
 import { ActivePage, CertificateItem } from './types';
 import { Sidebar } from './components/layout/Sidebar';
@@ -16,11 +16,11 @@ import { LearningPathsPage } from './pages/LearningPathsPage';
 import { ModuleDetailPage } from './pages/ModuleDetailPage';
 import { ScenarioPage } from './pages/ScenarioPage';
 import { AiFeedbackPage } from './pages/AiFeedbackPage';
-import { AnalyticsPage } from './pages/AnalyticsPage';
 import { AchievementsPage } from './pages/AchievementsPage';
 import { LeaderboardPage } from './pages/LeaderboardPage';
 import { ProfilePage } from './pages/ProfilePage';
 import { SettingsPage } from './pages/SettingsPage';
+import { MultiplayerPage } from './pages/MultiplayerPage';
 
 export default function App() {
   const {
@@ -53,9 +53,19 @@ export default function App() {
     setIsCertificateModalOpen,
     activeCertificate,
     setActiveCertificate,
+    missionHistory,
+    requestNextMission,
   } = useCyberState();
 
   const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
+
+  // Auto-detect join code in URL on launch
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('join')) {
+      navigateTo('multiplayer');
+    }
+  }, [navigateTo]);
 
   const activePage = currentPage;
   const handleNavigate = navigateTo;
@@ -64,12 +74,12 @@ export default function App() {
   const isStandalonePage = activePage === 'landing' || activePage === 'auth';
 
   return (
-    <div className="min-h-screen bg-[#080d19] text-slate-100 flex flex-col font-sans selection:bg-blue-600 selection:text-white">
+    <div className="min-h-screen bg-[#F7F9FC] text-[#243047] flex flex-col font-sans selection:bg-blue-200">
       {isStandalonePage ? (
         // Standalone Layout (Landing or Auth)
         <main className="flex-1 w-full">
           {activePage === 'landing' && (
-            <LandingPage onNavigate={handleNavigate} paths={paths} />
+            <LandingPage onNavigate={handleNavigate} />
           )}
           {activePage === 'auth' && (
             <AuthPage
@@ -121,6 +131,8 @@ export default function App() {
                   mentorInsight={mentorInsight}
                   onNavigate={handleNavigate}
                   onOpenMentor={() => setIsMentorDrawerOpen(true)}
+                  currentMission={scenarios.find((s) => s.id === selectedScenarioId) || scenarios[0]}
+                  missionsCompletedCount={missionHistory.length}
                 />
               )}
 
@@ -147,10 +159,18 @@ export default function App() {
                   scenarios={scenarios}
                   selectedScenarioId={selectedScenarioId}
                   onSelectScenarioId={setSelectedScenarioId}
-                  onSubmitDecision={(scenario, option) => {
-                    submitScenarioDecision(scenario, option);
+                  onSubmitDecision={(scenario, option, hintsUsed) => {
+                    submitScenarioDecision(scenario, option, hintsUsed);
                   }}
+                  onRequestNextMission={requestNextMission}
                   onNavigate={handleNavigate}
+                />
+              )}
+
+              {activePage === 'multiplayer' && (
+                <MultiplayerPage
+                  onNavigate={handleNavigate}
+                  user={user}
                 />
               )}
 
@@ -158,15 +178,8 @@ export default function App() {
                 <AiFeedbackPage
                   decisionData={lastScenarioDecision}
                   onNavigate={handleNavigate}
+                  onRequestNextMission={requestNextMission}
                   onOpenMentor={() => setIsMentorDrawerOpen(true)}
-                />
-              )}
-
-              {activePage === 'progress-analytics' && (
-                <AnalyticsPage
-                  user={user}
-                  skills={skills}
-                  onNavigate={handleNavigate}
                 />
               )}
 
@@ -193,6 +206,7 @@ export default function App() {
                   badges={badges}
                   paths={paths}
                   onNavigate={handleNavigate}
+                  setUser={setUser}
                 />
               )}
 

@@ -4,19 +4,18 @@ import {
   Mail,
   Smartphone,
   ArrowRight,
-  Clock,
-  ExternalLink,
   HelpCircle,
-  Sparkles,
   Shield,
   Search,
   Globe,
-  Info,
-  ChevronRight,
   AlertCircle,
   Flag,
   Trash2,
   CheckCircle2,
+  Sparkles,
+  Shuffle,
+  FileCode,
+  Lock,
 } from 'lucide-react';
 import { ByteMascot } from '../components/common/ByteMascot';
 
@@ -24,7 +23,8 @@ interface ScenarioPageProps {
   scenarios: ScenarioItem[];
   selectedScenarioId: string;
   onSelectScenarioId: (id: string) => void;
-  onSubmitDecision: (scenario: ScenarioItem, option: ScenarioOption) => void;
+  onSubmitDecision: (scenario: ScenarioItem, option: ScenarioOption, hintsUsed?: number) => void;
+  onRequestNextMission?: () => void;
   onNavigate: (page: ActivePage) => void;
 }
 
@@ -33,310 +33,243 @@ export const ScenarioPage: React.FC<ScenarioPageProps> = ({
   selectedScenarioId,
   onSelectScenarioId,
   onSubmitDecision,
+  onRequestNextMission,
   onNavigate,
 }) => {
   const currentScenario =
     scenarios.find((s) => s.id === selectedScenarioId) || scenarios[0];
 
   const [selectedOptionId, setSelectedOptionId] = useState<string | null>(null);
-  const [activeArtifactTab, setActiveArtifactTab] = useState<'message' | 'link' | 'headers'>('message');
-  const [activeDetectiveTool, setActiveDetectiveTool] = useState<'inspectLink' | 'checkDomain' | 'clues'>('inspectLink');
   const [showHint, setShowHint] = useState(false);
-  const [missionTimer, setMissionTimer] = useState<number>(0);
+  const [showClues, setShowClues] = useState(false);
 
+  // Reset local state when scenario changes
   useEffect(() => {
-    const timer = setInterval(() => {
-      setMissionTimer((prev) => prev + 1);
-    }, 1000);
-    return () => clearInterval(timer);
-  }, []);
+    setSelectedOptionId(null);
+    setShowHint(false);
+    setShowClues(false);
+  }, [selectedScenarioId]);
 
   const selectedOption = currentScenario.options.find((o) => o.id === selectedOptionId);
 
   const handleSubmit = () => {
     if (!selectedOption) return;
-    onSubmitDecision(currentScenario, selectedOption);
+    const hintsUsed = (showHint ? 1 : 0) + (showClues ? 1 : 0);
+    onSubmitDecision(currentScenario, selectedOption, hintsUsed);
   };
 
-  const formatTimer = (sec: number) => {
-    const mins = Math.floor(sec / 60);
-    const s = sec % 60;
-    return `${mins}:${s.toString().padStart(2, '0')}`;
+  // Scaffold level labels
+  const getScaffoldBadge = (level: number = 1) => {
+    switch (level) {
+      case 1:
+        return { label: 'Level 1: Rookie Scout', color: 'bg-emerald-100 text-emerald-800 border-emerald-200' };
+      case 2:
+        return { label: 'Level 2: Detective', color: 'bg-blue-100 text-blue-800 border-blue-200' };
+      case 3:
+        return { label: 'Level 3: Investigator', color: 'bg-purple-100 text-purple-800 border-purple-200' };
+      case 4:
+        return { label: 'Level 4: Guardian', color: 'bg-amber-100 text-amber-800 border-amber-200' };
+      case 5:
+        return { label: 'Level 5: Master Agent', color: 'bg-rose-100 text-rose-800 border-rose-200' };
+      default:
+        return { label: `Level ${level}`, color: 'bg-slate-100 text-slate-800 border-slate-200' };
+    }
   };
 
   // Option icon helper
-  const getOptionIcon = (opt: ScenarioOption, index: number) => {
+  const getOptionIcon = (opt: ScenarioOption) => {
     const text = opt.text.toLowerCase();
     if (text.includes('report') || text.includes('forward') || text.includes('security')) {
       return { icon: Flag, color: 'text-amber-500 bg-amber-50' };
     }
-    if (text.includes('delete') || text.includes('block') || text.includes('ignore')) {
+    if (text.includes('delete') || text.includes('block') || text.includes('ignore') || text.includes('decline')) {
       return { icon: Trash2, color: 'text-rose-500 bg-rose-50' };
     }
-    if (text.includes('inspect') || text.includes('verify') || text.includes('check') || text.includes('out-of-band')) {
+    if (text.includes('inspect') || text.includes('verify') || text.includes('check') || text.includes('call') || text.includes('bookmark')) {
       return { icon: Search, color: 'text-blue-500 bg-blue-50' };
     }
     return { icon: HelpCircle, color: 'text-purple-500 bg-purple-50' };
   };
 
+  const scaffold = getScaffoldBadge(currentScenario.scaffoldLevel);
+
   return (
-    <div className="p-4 sm:p-6 lg:p-8 space-y-6 max-w-6xl mx-auto text-[#243047] font-sans">
-      {/* Top Breadcrumb & Mission Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 pb-4">
+    <div className="p-4 sm:p-6 lg:p-8 space-y-6 max-w-5xl mx-auto text-[#243047] font-sans">
+      {/* Top Header - No countdown timer, clean and welcoming */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 pb-4">
         <div>
-          <div className="flex items-center gap-2 text-xs font-black text-[#4F7CFF]">
-            <span>🎯</span>
-            <span className="uppercase tracking-wider">CYBER MISSION #{currentScenario.id === 'scenario-univ-phish' ? '1' : '2'}</span>
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="px-2.5 py-0.5 rounded-full bg-blue-100 text-[#4F7CFF] text-[11px] font-black uppercase tracking-wider">
+              🎯 YOUR MISSION
+            </span>
+            <span className={`px-2.5 py-0.5 rounded-full border text-[11px] font-extrabold ${scaffold.color}`}>
+              {scaffold.label}
+            </span>
+            <span className="text-xs font-bold text-slate-500">
+              ⏱️ ~{currentScenario.estimatedMinutes || 3} min • Self-paced
+            </span>
           </div>
-          <h1 className="text-xl sm:text-2xl font-black text-[#243047] mt-0.5">
+
+          <h1 className="text-xl sm:text-2xl font-black text-[#243047] mt-1.5">
             {currentScenario.title}
           </h1>
+          <p className="text-xs sm:text-sm text-slate-600 mt-0.5">
+            {currentScenario.context}
+          </p>
         </div>
 
-        {/* Mission Switcher Pills & Timer */}
-        <div className="flex items-center gap-2 flex-wrap">
-          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-blue-50 border border-blue-200 text-xs font-bold text-[#4F7CFF]">
-            <Clock className="w-3.5 h-3.5" />
-            <span>Time: {formatTimer(missionTimer)}</span>
-          </div>
-
-          <div className="flex items-center gap-1">
-            {scenarios.map((sc, i) => (
-              <button
-                key={sc.id}
-                onClick={() => {
-                  onSelectScenarioId(sc.id);
-                  setSelectedOptionId(null);
-                  setShowHint(false);
-                }}
-                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-colors ${
-                  sc.id === currentScenario.id
-                    ? 'bg-[#4F7CFF] text-white shadow-2xs'
-                    : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
-                }`}
-              >
-                Mission {i + 1}
-              </button>
-            ))}
-          </div>
-        </div>
+        {/* Action: Switch to another adaptive mission if curious */}
+        {onRequestNextMission && (
+          <button
+            onClick={onRequestNextMission}
+            className="px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition-colors shrink-0 flex items-center gap-1.5 self-start sm:self-center"
+            title="Pick another challenge adapted to your level"
+          >
+            <Shuffle className="w-3.5 h-3.5 text-slate-600" />
+            <span>Try Another Mission</span>
+          </button>
+        )}
       </div>
 
       {/* Main 2-Column Workstation */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-        {/* LEFT COLUMN: Clean Realistic Artifact Viewer (7 cols) */}
+        {/* LEFT COLUMN: Simulated Artifact Window (7 cols) */}
         <div className="lg:col-span-7 space-y-4">
-          {/* Artifact Card */}
           <div className="bg-white rounded-3xl border-2 border-slate-200/90 shadow-sm overflow-hidden">
-            {/* Artifact Browser / Email Window Title Bar */}
+            {/* Artifact Window Header */}
             <div className="px-5 py-3 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <span className="w-3 h-3 rounded-full bg-rose-400 inline-block" />
                 <span className="w-3 h-3 rounded-full bg-amber-400 inline-block" />
                 <span className="w-3 h-3 rounded-full bg-emerald-400 inline-block" />
                 <span className="text-xs font-bold text-slate-700 ml-2">
-                  {currentScenario.environmentType === 'email' ? '📬 Webmail Inbox' : '📱 Message Notification'}
+                  {currentScenario.environmentType === 'email' && '📬 Webmail Inbox'}
+                  {currentScenario.environmentType === 'sms' && '💬 Text Message (SMS)'}
+                  {currentScenario.environmentType === 'social_media' && '💬 Direct Chat Message'}
+                  {currentScenario.environmentType === 'browser' && '🌐 Webpage Prompt'}
+                  {currentScenario.environmentType === 'system_alert' && '⚙️ Device Security Alert'}
                 </span>
               </div>
 
-              {/* View Modes */}
-              <div className="flex items-center gap-1 bg-white p-1 rounded-xl border border-slate-200 text-xs font-bold">
-                <button
-                  onClick={() => setActiveArtifactTab('message')}
-                  className={`px-2.5 py-1 rounded-lg transition-colors ${
-                    activeArtifactTab === 'message'
-                      ? 'bg-blue-100 text-[#4F7CFF]'
-                      : 'text-slate-500 hover:text-slate-800'
-                  }`}
-                >
-                  Message
-                </button>
-                <button
-                  onClick={() => setActiveArtifactTab('link')}
-                  className={`px-2.5 py-1 rounded-lg transition-colors ${
-                    activeArtifactTab === 'link'
-                      ? 'bg-blue-100 text-[#4F7CFF]'
-                      : 'text-slate-500 hover:text-slate-800'
-                  }`}
-                >
-                  Inspect Link
-                </button>
-                <button
-                  onClick={() => setActiveArtifactTab('headers')}
-                  className={`px-2.5 py-1 rounded-lg transition-colors ${
-                    activeArtifactTab === 'headers'
-                      ? 'bg-blue-100 text-[#4F7CFF]'
-                      : 'text-slate-500 hover:text-slate-800'
-                  }`}
-                >
-                  Raw Code
-                </button>
-              </div>
+              <span className="text-[11px] font-bold text-slate-500">
+                {currentScenario.category}
+              </span>
             </div>
 
-            {/* Email / Notification Content View */}
+            {/* Artifact Body */}
             <div className="p-6 space-y-4">
-              {activeArtifactTab === 'message' && (
-                <div className="space-y-4">
-                  {/* Sender Header Card */}
-                  <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 text-xs space-y-1">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <span className="text-slate-500 font-bold">From:</span>
-                        <span className="font-extrabold text-[#243047]">
-                          {currentScenario.simulatedArtifact.sender}
-                        </span>
-                      </div>
-                      <span className="text-slate-600 text-[11px]">
-                        {currentScenario.simulatedArtifact.timestamp || 'Today 9:42 AM'}
+              {/* Sender info card if present */}
+              {(currentScenario.simulatedArtifact.sender || currentScenario.simulatedArtifact.senderAddress) && (
+                <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 text-xs space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="text-slate-500 font-bold">From:</span>
+                      <span className="font-extrabold text-[#243047]">
+                        {currentScenario.simulatedArtifact.sender || 'Unknown Sender'}
                       </span>
                     </div>
+                    <span className="text-slate-500 text-[11px]">
+                      {currentScenario.simulatedArtifact.timestamp || 'Just now'}
+                    </span>
+                  </div>
 
-                    <div className="flex items-center gap-1 text-[11px] text-slate-500 font-mono">
-                      <span>&lt;{currentScenario.simulatedArtifact.senderAddress}&gt;</span>
+                  {currentScenario.simulatedArtifact.senderAddress && (
+                    <div className="text-[11px] text-slate-500 font-mono">
+                      &lt;{currentScenario.simulatedArtifact.senderAddress}&gt;
                     </div>
+                  )}
 
-                    {currentScenario.simulatedArtifact.subject && (
-                      <div className="pt-2 border-t border-slate-200/60">
-                        <span className="text-slate-500 font-bold mr-2">Subject:</span>
-                        <span className="font-bold text-slate-800">
-                          {currentScenario.simulatedArtifact.subject}
-                        </span>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Body Content with formatting */}
-                  <div className="p-4 rounded-2xl bg-white border border-slate-100 text-sm leading-relaxed text-slate-700 whitespace-pre-line">
-                    {currentScenario.simulatedArtifact.body}
-                  </div>
-
-                  {/* Embedded Action Button / Link in message */}
-                  {currentScenario.simulatedArtifact.targetUrl && (
-                    <div className="p-4 rounded-2xl bg-amber-50/70 border-2 border-dashed border-amber-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                      <div>
-                        <span className="text-[11px] font-black uppercase text-amber-800 tracking-wide block">
-                          LINK INSIDE THIS MESSAGE
-                        </span>
-                        <code className="text-xs font-mono font-bold text-amber-900 break-all">
-                          {currentScenario.simulatedArtifact.targetUrl}
-                        </code>
-                      </div>
-
-                      <button
-                        onClick={() => setActiveDetectiveTool('inspectLink')}
-                        className="px-3.5 py-1.5 rounded-xl bg-amber-200/80 hover:bg-amber-300 text-amber-900 text-xs font-bold transition-colors shrink-0 flex items-center gap-1"
-                      >
-                        <Search className="w-3.5 h-3.5" />
-                        <span>Inspect Link</span>
-                      </button>
+                  {currentScenario.simulatedArtifact.subject && (
+                    <div className="pt-2 border-t border-slate-200/60">
+                      <span className="text-slate-500 font-bold mr-2">Subject:</span>
+                      <span className="font-bold text-slate-800">
+                        {currentScenario.simulatedArtifact.subject}
+                      </span>
                     </div>
                   )}
                 </div>
               )}
 
-              {activeArtifactTab === 'link' && (
-                <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 text-xs space-y-3 font-mono">
-                  <div className="flex items-center gap-2 text-blue-600 font-bold">
-                    <Globe className="w-4 h-4" />
-                    <span>LINK DESTINATION ANALYSIS</span>
+              {/* Message / Alert Content */}
+              <div className="p-4 rounded-2xl bg-slate-50/50 border border-slate-200 text-sm leading-relaxed text-slate-800 whitespace-pre-line font-medium">
+                {currentScenario.simulatedArtifact.body}
+              </div>
+
+              {/* Attached file warning if present */}
+              {currentScenario.simulatedArtifact.attachedFile && (
+                <div className="p-3.5 rounded-2xl bg-rose-50 border border-rose-200 flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-2.5">
+                    <FileCode className="w-5 h-5 text-rose-600" />
+                    <div>
+                      <span className="text-[10px] font-black uppercase text-rose-700 tracking-wide block">
+                        ATTACHED DOWNLOAD FILE
+                      </span>
+                      <code className="text-xs font-mono font-bold text-rose-900">
+                        {currentScenario.simulatedArtifact.attachedFile}
+                      </code>
+                    </div>
                   </div>
-                  <div className="p-3 rounded-xl bg-white border border-slate-200 space-y-1">
-                    <span className="text-slate-500 text-[10px] block">Full Web Address:</span>
-                    <span className="text-rose-600 font-bold text-xs break-all">
-                      {currentScenario.simulatedArtifact.targetUrl || 'http://login.univ.edu.auth-portal-verify.org/session?id=9928'}
-                    </span>
-                  </div>
-                  <p className="font-sans text-xs text-slate-600 leading-normal">
-                    Notice how the web address starts with words you recognize, but right before the first slash <code>/</code>, the real domain is <strong>auth-portal-verify.org</strong>!
-                  </p>
+                  <span className="text-[10px] font-bold px-2 py-1 bg-rose-200/70 text-rose-800 rounded-lg shrink-0">
+                    Inspect extension
+                  </span>
                 </div>
               )}
 
-              {activeArtifactTab === 'headers' && (
-                <div className="p-4 rounded-2xl bg-[#0a0f1d] text-slate-200 text-xs font-mono space-y-2 overflow-x-auto">
-                  <div className="text-blue-400 font-bold text-[11px]">--- EMAIL ENVELOPE HEADERS ---</div>
-                  <pre className="text-[11px] leading-relaxed">
-{`From: "${currentScenario.simulatedArtifact.sender}" <${currentScenario.simulatedArtifact.senderAddress}>
-DKIM-Signature: v=1; d=attacker-network.cc (DOMAIN MISMATCH)
-Authentication-Results: spf=softfail (unapproved IP sender)
-X-Spam-Flag: SUSPICIOUS_URGENCY`}
-                  </pre>
+              {/* Embedded Link in message if present */}
+              {currentScenario.simulatedArtifact.targetUrl && (
+                <div className="p-3.5 rounded-2xl bg-amber-50/70 border border-amber-200 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+                  <div className="min-w-0">
+                    <span className="text-[10px] font-black uppercase text-amber-800 tracking-wide block">
+                      LINK IN MESSAGE
+                    </span>
+                    <code className="text-xs font-mono font-bold text-amber-900 break-all">
+                      {currentScenario.simulatedArtifact.targetUrl}
+                    </code>
+                  </div>
                 </div>
               )}
             </div>
           </div>
 
-          {/* Detective Tools Box */}
-          <div className="bg-white rounded-3xl border border-slate-200 p-5 shadow-xs space-y-3">
+          {/* Progressive Clues Inspector Tool (Hidden by default, opened on demand) */}
+          <div className="bg-white rounded-3xl border border-slate-200 p-4 shadow-2xs space-y-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <span className="text-lg">🕵️</span>
                 <span className="text-xs font-black text-slate-700 uppercase tracking-wider">
-                  DETECTIVE TOOLS
+                  INVESTIGATIVE CLUES
                 </span>
               </div>
-              <span className="text-[11px] font-bold text-[#4F7CFF]">
-                Click a tool to uncover clues
-              </span>
-            </div>
-
-            <div className="grid grid-cols-3 gap-2 text-xs font-bold">
               <button
-                onClick={() => setActiveDetectiveTool('inspectLink')}
-                className={`py-2 px-3 rounded-xl border transition-colors flex items-center justify-center gap-1.5 ${
-                  activeDetectiveTool === 'inspectLink'
-                    ? 'bg-blue-50 border-[#4F7CFF] text-[#4F7CFF]'
-                    : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100'
-                }`}
+                onClick={() => setShowClues(!showClues)}
+                className="text-xs font-bold text-[#4F7CFF] hover:text-[#3D6CE6] flex items-center gap-1"
               >
-                <Search className="w-3.5 h-3.5" />
-                <span>Inspect Link</span>
-              </button>
-
-              <button
-                onClick={() => setActiveDetectiveTool('checkDomain')}
-                className={`py-2 px-3 rounded-xl border transition-colors flex items-center justify-center gap-1.5 ${
-                  activeDetectiveTool === 'checkDomain'
-                    ? 'bg-blue-50 border-[#4F7CFF] text-[#4F7CFF]'
-                    : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100'
-                }`}
-              >
-                <Globe className="w-3.5 h-3.5" />
-                <span>Check Domain</span>
-              </button>
-
-              <button
-                onClick={() => setActiveDetectiveTool('clues')}
-                className={`py-2 px-3 rounded-xl border transition-colors flex items-center justify-center gap-1.5 ${
-                  activeDetectiveTool === 'clues'
-                    ? 'bg-blue-50 border-[#4F7CFF] text-[#4F7CFF]'
-                    : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100'
-                }`}
-              >
-                <Info className="w-3.5 h-3.5" />
-                <span>View Clues</span>
+                <span>{showClues ? 'Hide Clues' : '🔍 Inspect Details'}</span>
               </button>
             </div>
 
-            {/* Detective Result Box */}
-            <div className="p-3.5 rounded-2xl bg-blue-50/50 border border-blue-100 text-xs text-slate-700">
-              {activeDetectiveTool === 'inspectLink' && (
-                <p className="leading-relaxed">
-                  🔍 <strong>Link Clue:</strong> The email claims to be from school IT, but the link points to a newly registered website that isn't on the school network!
-                </p>
-              )}
-              {activeDetectiveTool === 'checkDomain' && (
-                <p className="leading-relaxed">
-                  🌐 <strong>Domain Clue:</strong> The domain <code>auth-portal-verify.org</code> was registered only 2 days ago via an anonymous proxy service.
-                </p>
-              )}
-              {activeDetectiveTool === 'clues' && (
-                <p className="leading-relaxed">
-                  📋 <strong>Urgency Clue:</strong> Notice the text: "Your account will be terminated in 12 hours". Scammers use fake deadlines to make you panic!
-                </p>
-              )}
-            </div>
+            {showClues && (
+              <div className="p-4 rounded-2xl bg-blue-50/70 border border-blue-200 text-xs text-slate-700 space-y-2 animate-in fade-in duration-200">
+                {currentScenario.toolReveals?.checkSender && (
+                  <div>
+                    <strong className="text-blue-900 font-bold block mb-0.5">Sender Analysis:</strong>
+                    <p className="text-slate-700 leading-relaxed">{currentScenario.toolReveals.checkSender}</p>
+                  </div>
+                )}
+                {currentScenario.toolReveals?.checkLink && (
+                  <div className="pt-1.5 border-t border-blue-200/60">
+                    <strong className="text-blue-900 font-bold block mb-0.5">Link / Code Analysis:</strong>
+                    <p className="text-slate-700 leading-relaxed">{currentScenario.toolReveals.checkLink}</p>
+                  </div>
+                )}
+                {currentScenario.toolReveals?.clue && (
+                  <div className="pt-1.5 border-t border-blue-200/60">
+                    <strong className="text-blue-900 font-bold block mb-0.5">Cyber Detective Hint:</strong>
+                    <p className="text-slate-700 leading-relaxed">{currentScenario.toolReveals.clue}</p>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </div>
 
@@ -346,7 +279,7 @@ X-Spam-Flag: SUSPICIOUS_URGENCY`}
             <div>
               <div className="flex items-center justify-between">
                 <span className="px-2.5 py-0.5 rounded-full bg-blue-100 text-blue-700 text-[11px] font-black uppercase tracking-wider">
-                  YOUR TURN
+                  YOUR DECISION
                 </span>
                 <span className="text-xs font-bold text-slate-500">
                   Select 1 action
@@ -362,9 +295,9 @@ X-Spam-Flag: SUSPICIOUS_URGENCY`}
 
             {/* Answer Options as Large Friendly Cards */}
             <div className="space-y-2.5">
-              {currentScenario.options.map((opt, idx) => {
+              {currentScenario.options.map((opt) => {
                 const isSelected = selectedOptionId === opt.id;
-                const { icon: Icon, color } = getOptionIcon(opt, idx);
+                const { icon: Icon, color } = getOptionIcon(opt);
 
                 return (
                   <button
@@ -411,14 +344,15 @@ X-Spam-Flag: SUSPICIOUS_URGENCY`}
                 className="w-full py-2.5 px-4 rounded-2xl bg-amber-50 hover:bg-amber-100/80 border border-amber-200 text-xs font-bold text-amber-800 transition-colors flex items-center justify-center gap-2"
               >
                 <ByteMascot mood="thinking" size="xs" />
-                <span>{showHint ? 'Hide Byte’s Hint' : 'Need help? Ask Byte for a hint!'}</span>
+                <span>{showHint ? 'Hide Byte’s Hint' : '💡 Need a hint? Ask Byte'}</span>
               </button>
 
               {showHint && (
                 <div className="mt-3 p-3.5 rounded-2xl bg-gradient-to-br from-amber-50 to-orange-50 border border-amber-200 text-xs text-amber-900 space-y-1 animate-in fade-in duration-150">
                   <span className="font-black block">💡 Byte Whispers:</span>
                   <p className="leading-relaxed text-[11px]">
-                    "Take a close look at the sender’s address and the URL. If someone asks you to click an urgent login link, the safest choice is always to report it or check your real school app directly!"
+                    {currentScenario.hint ||
+                      'Take a close look at who sent the message and what they want you to click or give away. The safest choice is always to check the official school portal directly!'}
                   </p>
                 </div>
               )}

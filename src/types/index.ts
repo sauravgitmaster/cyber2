@@ -97,6 +97,7 @@ export interface ScenarioItem {
   title: string;
   category: string;
   difficulty: DifficultyLevel;
+  scaffoldLevel?: 1 | 2 | 3 | 4 | 5;
   estimatedMinutes: number;
   context: string;
   threatActor?: string;
@@ -114,6 +115,23 @@ export interface ScenarioItem {
   prompt: string;
   options: ScenarioOption[];
   tags: string[];
+  hint?: string;
+  educationalTakeaway?: string;
+  toolReveals?: {
+    checkSender?: string;
+    checkLink?: string;
+    clue?: string;
+  };
+}
+
+export interface MissionHistoryItem {
+  missionId: string;
+  category: string;
+  difficulty: DifficultyLevel;
+  scaffoldLevel: 1 | 2 | 3 | 4 | 5;
+  outcome: 'correct' | 'partial' | 'incorrect';
+  hintsUsed: number;
+  completedAt: string;
 }
 
 export interface SkillCheckQuestion {
@@ -198,4 +216,7 @@ export type ActivePage =
   | 'badges'
   | 'leaderboard'
   | 'profile'
+  | 'multiplayer'
   | 'settings';
+
+export * from './multiplayer';

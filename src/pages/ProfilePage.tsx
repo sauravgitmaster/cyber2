@@ -1,24 +1,25 @@
 import React, { useState } from 'react';
 import { ActivePage, BadgeItem, LearningPath, UserProfile } from '../types';
-import { TrustScoreGauge } from '../components/common/TrustScoreGauge';
+import { AvatarUploader } from '../components/common/AvatarUploader';
+import { getLearnerLevel } from '../utils/levelSystem';
 import {
   User,
-  Building,
-  GraduationCap,
   Award,
-  Download,
   CheckCircle2,
   Calendar,
   Sparkles,
   Zap,
+  Shield,
+  Edit2,
+  Save,
 } from 'lucide-react';
-import { ByteMascot } from '../components/common/ByteMascot';
 
 interface ProfilePageProps {
   user: UserProfile;
   badges: BadgeItem[];
   paths: LearningPath[];
   onNavigate: (page: ActivePage) => void;
+  setUser?: React.Dispatch<React.SetStateAction<UserProfile>>;
 }
 
 export const ProfilePage: React.FC<ProfilePageProps> = ({
@@ -26,181 +27,166 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({
   badges,
   paths,
   onNavigate,
+  setUser,
 }) => {
-  const [showExportToast, setShowExportToast] = useState(false);
+  const [isEditingName, setIsEditingName] = useState(false);
+  const [nameInput, setNameInput] = useState(user.name);
 
   const unlockedBadges = badges.filter((b) => b.unlocked);
   const completedPaths = paths.filter((p) => p.progress >= 100);
+  const levelInfo = getLearnerLevel(user.digitalTrustScore);
 
-  const handleExportReport = () => {
-    setShowExportToast(true);
-    setTimeout(() => setShowExportToast(false), 3000);
+  const handleAvatarChange = (newAvatar: string) => {
+    if (setUser) {
+      setUser((prev) => ({ ...prev, avatar: newAvatar }));
+    }
+  };
+
+  const handleSaveName = () => {
+    if (nameInput.trim() && setUser) {
+      setUser((prev) => ({ ...prev, name: nameInput.trim() }));
+    }
+    setIsEditingName(false);
   };
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8 space-y-6 max-w-5xl mx-auto text-[#243047] font-sans">
-      {/* Toast Notification */}
-      {showExportToast && (
-        <div className="fixed bottom-6 right-6 z-50 p-4 rounded-2xl bg-white border-2 border-emerald-400 text-[#243047] text-xs font-bold shadow-2xl flex items-center gap-3 animate-in fade-in duration-200">
-          <CheckCircle2 className="w-5 h-5 text-emerald-500" />
-          <span>Cyber Hero Certificate & Transcript downloaded (.PDF)!</span>
-        </div>
-      )}
-
+    <div className="p-4 sm:p-6 lg:p-8 space-y-6 max-w-4xl mx-auto text-[#243047] font-sans">
       {/* Top Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 pb-5">
+      <div className="flex items-center justify-between border-b border-slate-200 pb-4">
         <div>
-          <div className="flex items-center gap-2 mb-1 text-xs font-black text-[#4F7CFF] uppercase tracking-wider">
-            <User className="w-4 h-4" />
-            <span>STUDENT PASSPORT</span>
+          <div className="flex items-center gap-1.5 mb-1 text-[11px] font-black text-[#4F7CFF] uppercase tracking-wider">
+            <User className="w-3.5 h-3.5" />
+            <span>MY CYBER PASSPORT</span>
           </div>
           <h1 className="text-2xl sm:text-3xl font-black text-[#243047]">
-            My Cyber Profile
+            My Profile
           </h1>
-          <p className="text-xs sm:text-sm text-slate-600 mt-1">
-            Your personal credentials, earned badges, and cybersecurity accomplishments.
-          </p>
         </div>
 
-        {/* Action Buttons */}
-        <div className="flex items-center gap-3">
+        <span className="px-3 py-1 rounded-full bg-blue-50 border border-blue-200 text-xs font-black text-[#4F7CFF]">
+          {levelInfo.levelBadge}
+        </span>
+      </div>
+
+      {/* Main Profile Card */}
+      <div className="p-6 sm:p-8 rounded-3xl bg-white border border-slate-200 shadow-sm space-y-6">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-6">
+          {/* Avatar Uploader */}
+          <div className="shrink-0 flex justify-center sm:justify-start">
+            <AvatarUploader
+              currentAvatar={user.avatar || '🤖'}
+              onAvatarChange={handleAvatarChange}
+              size="lg"
+            />
+          </div>
+
+          {/* Name & Quick Stats */}
+          <div className="space-y-3 flex-1 text-center sm:text-left">
+            <div className="space-y-1">
+              {isEditingName ? (
+                <div className="flex items-center gap-2 justify-center sm:justify-start">
+                  <input
+                    type="text"
+                    value={nameInput}
+                    onChange={(e) => setNameInput(e.target.value)}
+                    className="px-3 py-1.5 rounded-xl border border-[#4F7CFF] font-black text-xl text-[#243047] bg-white focus:outline-none"
+                    autoFocus
+                  />
+                  <button
+                    onClick={handleSaveName}
+                    className="p-2 rounded-xl bg-[#4F7CFF] text-white hover:bg-[#3D6CE6]"
+                  >
+                    <Save className="w-4 h-4" />
+                  </button>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2 justify-center sm:justify-start">
+                  <h2 className="text-2xl font-black text-[#243047]">{user.name}</h2>
+                  <button
+                    onClick={() => setIsEditingName(true)}
+                    className="p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100"
+                    title="Edit Name"
+                  >
+                    <Edit2 className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              )}
+
+              <p className="text-xs font-semibold text-slate-500">
+                {user.email || 'cyberlearner@cybermentor.app'}
+              </p>
+            </div>
+
+            {/* Badges in level */}
+            <div className="flex items-center gap-2 flex-wrap justify-center sm:justify-start">
+              <span className="px-3 py-1 rounded-full bg-gradient-to-r from-blue-500 to-indigo-600 text-white text-xs font-black">
+                {levelInfo.emoji} {levelInfo.levelTitle}
+              </span>
+              <span className="px-3 py-1 rounded-full bg-slate-100 text-slate-700 text-xs font-bold">
+                {user.streakDays} Day Streak 🔥
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* Metrics Grid */}
+        <div className="grid grid-cols-3 gap-3 pt-4 border-t border-slate-100">
+          <div className="p-4 rounded-2xl bg-blue-50/70 border border-blue-100 text-center space-y-1">
+            <span className="text-[11px] font-black text-slate-500 uppercase block">
+              Smart Score
+            </span>
+            <div className="text-2xl font-black text-[#4F7CFF]">
+              {user.digitalTrustScore} ⭐
+            </div>
+          </div>
+
+          <div className="p-4 rounded-2xl bg-purple-50/70 border border-purple-100 text-center space-y-1">
+            <span className="text-[11px] font-black text-slate-500 uppercase block">
+              Total XP
+            </span>
+            <div className="text-2xl font-black text-[#8B6CFF]">
+              {user.currentXP}
+            </div>
+          </div>
+
+          <div className="p-4 rounded-2xl bg-amber-50/70 border border-amber-100 text-center space-y-1">
+            <span className="text-[11px] font-black text-slate-500 uppercase block">
+              Badges
+            </span>
+            <div className="text-2xl font-black text-amber-600">
+              {unlockedBadges.length}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Badges Earned */}
+      <div className="p-6 sm:p-8 rounded-3xl bg-white border border-slate-200 shadow-sm space-y-4">
+        <div className="flex items-center justify-between">
+          <h3 className="text-base font-black text-[#243047]">My Trophies</h3>
           <button
-            onClick={handleExportReport}
-            className="px-4 py-2.5 rounded-2xl bg-[#4F7CFF] hover:bg-[#3D6CE6] text-white font-black text-xs transition-colors flex items-center gap-2 shadow-xs"
+            onClick={() => onNavigate('badges')}
+            className="text-xs font-black text-[#4F7CFF] hover:underline"
           >
-            <Download className="w-4 h-4" />
-            <span>Download Cyber Report</span>
+            See All Badges →
           </button>
         </div>
-      </div>
 
-      {/* Profile Overview Card */}
-      <div className="p-6 sm:p-8 rounded-3xl bg-white border border-slate-200 shadow-sm space-y-6">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-          {/* Avatar and Info */}
-          <div className="flex items-start gap-4">
-            <div className="w-18 h-18 rounded-3xl overflow-hidden border-2 border-blue-200 bg-blue-50 flex items-center justify-center shrink-0 shadow-xs">
-              <ByteMascot mood="excited" size="md" />
-            </div>
-            <div className="space-y-1.5">
-              <div className="flex items-center gap-2 flex-wrap">
-                <h2 className="text-xl font-black text-[#243047]">{user.name}</h2>
-                <span className="px-3 py-0.5 rounded-full bg-blue-100 text-[#4F7CFF] text-xs font-black">
-                  CYBER EXPLORER
-                </span>
-              </div>
-              <p className="text-xs font-bold text-slate-600 flex items-center gap-2">
-                <GraduationCap className="w-4 h-4 text-[#4F7CFF]" />
-                <span>Level 0{user.level} — {user.levelTitle}</span>
-                <span className="text-slate-300">•</span>
-                <span>Student ID: {user.studentId}</span>
-              </p>
-              <p className="text-xs font-medium text-slate-500 flex items-center gap-2">
-                <Building className="w-4 h-4 text-slate-400" />
-                <span>{user.institution}</span>
-              </p>
-            </div>
-          </div>
-
-          {/* Trust Score Mini Gauge */}
-          <div className="p-4 rounded-2xl bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100 flex items-center gap-5 self-start md:self-auto">
-            <div className="space-y-0.5">
-              <span className="text-[11px] font-black uppercase text-slate-500 block">
-                CYBER SMART SCORE
-              </span>
-              <div className="text-xl font-black text-[#243047]">
-                {user.digitalTrustScore} / 100 ⭐
-              </div>
-              <span className="text-xs font-black text-emerald-600">
-                High Resilience
-              </span>
-            </div>
-            <TrustScoreGauge score={user.digitalTrustScore} delta={user.trustScoreDelta} size="sm" showLabel={false} />
-          </div>
-        </div>
-
-        {/* Record Details Grid */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-4 border-t border-slate-100">
-          <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-1">
-            <span className="text-[11px] font-black text-slate-500 uppercase">Student ID</span>
-            <div className="text-xs font-bold text-[#243047]">{user.studentId}</div>
-          </div>
-          <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-1">
-            <span className="text-[11px] font-black text-slate-500 uppercase">Email</span>
-            <div className="text-xs font-medium text-slate-600 truncate">{user.email}</div>
-          </div>
-          <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-1">
-            <span className="text-[11px] font-black text-slate-500 uppercase">Current Rank</span>
-            <div className="text-xs font-black text-[#8B6CFF]">Level 0{user.level}</div>
-          </div>
-          <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-1">
-            <span className="text-[11px] font-black text-slate-500 uppercase">Member Since</span>
-            <div className="text-xs font-medium text-slate-600">{user.joinedDate}</div>
-          </div>
-        </div>
-      </div>
-
-      {/* Completed Adventures & Earned Badges Row */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Curriculums */}
-        <div className="p-6 rounded-3xl bg-white border border-slate-200 shadow-sm space-y-4">
-          <div className="flex items-center justify-between">
-            <h3 className="text-base font-black text-[#243047]">Completed Adventures</h3>
-            <span className="text-xs font-bold text-[#4F7CFF]">{completedPaths.length} Completed</span>
-          </div>
-
-          <div className="space-y-3">
-            {completedPaths.map((p) => (
-              <div
-                key={p.id}
-                className="p-4 rounded-2xl bg-emerald-50/60 border border-emerald-200 flex items-center justify-between"
-              >
-                <div>
-                  <div className="font-bold text-xs text-[#243047]">{p.title}</div>
-                  <div className="text-xs text-emerald-800 font-medium">{p.category}</div>
-                </div>
-                <div className="flex items-center gap-1.5 text-xs text-emerald-700 font-black">
-                  <CheckCircle2 className="w-4 h-4" />
-                  <span>100%</span>
-                </div>
-              </div>
-            ))}
-            {completedPaths.length === 0 && (
-              <div className="text-xs text-slate-500 py-3 text-center">
-                Keep going! Complete your first adventure to display it here.
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Badges Earned */}
-        <div className="p-6 rounded-3xl bg-white border border-slate-200 shadow-sm space-y-4">
-          <div className="flex items-center justify-between">
-            <h3 className="text-base font-black text-[#243047]">Recent Badges</h3>
-            <button
-              onClick={() => onNavigate('achievements')}
-              className="text-xs font-black text-[#4F7CFF] hover:underline"
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          {unlockedBadges.slice(0, 4).map((b) => (
+            <div
+              key={b.id}
+              className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200/80 flex items-center gap-3"
             >
-              View Trophy Room ({unlockedBadges.length}) →
-            </button>
-          </div>
-
-          <div className="grid grid-cols-2 gap-3">
-            {unlockedBadges.slice(0, 4).map((b) => (
-              <div
-                key={b.id}
-                className="p-3.5 rounded-2xl bg-blue-50/50 border border-blue-100 flex items-center gap-3"
-              >
-                <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 text-white flex items-center justify-center shrink-0 shadow-2xs">
-                  <Award className="w-5 h-5" />
-                </div>
-                <div className="truncate">
-                  <div className="text-xs font-bold text-[#243047] truncate">{b.title}</div>
-                  <div className="text-[11px] font-black text-purple-700">+{b.xpValue} XP</div>
-                </div>
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 text-white flex items-center justify-center shrink-0 shadow-2xs">
+                <Award className="w-5 h-5" />
               </div>
-            ))}
-          </div>
+              <div className="truncate">
+                <div className="text-xs font-black text-[#243047] truncate">{b.title}</div>
+                <div className="text-[10px] font-bold text-slate-500">Unlocked</div>
+              </div>
+            </div>
+          ))}
         </div>
       </div>
     </div>

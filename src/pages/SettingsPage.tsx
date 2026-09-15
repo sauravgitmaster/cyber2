@@ -8,9 +8,9 @@ import {
   RotateCcw,
   Check,
   Save,
-  Moon,
-  Lock,
+  Sparkles,
 } from 'lucide-react';
+import { ByteMascot } from '../components/common/ByteMascot';
 
 interface SettingsPageProps {
   user: UserProfile;
@@ -38,7 +38,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
 
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
-    setUser(prev => ({
+    setUser((prev) => ({
       ...prev,
       name,
       email,
@@ -50,168 +50,166 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
   };
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8 space-y-6 max-w-4xl mx-auto text-slate-100 animate-in fade-in duration-200">
+    <div className="p-4 sm:p-6 lg:p-8 space-y-6 max-w-4xl mx-auto text-[#243047] font-sans">
       {/* Top Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-800 pb-5">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 pb-5">
         <div>
-          <div className="flex items-center gap-2 mb-1">
-            <Settings className="w-5 h-5 text-blue-400" />
-            <span className="text-xs font-mono text-blue-400 uppercase tracking-wider">
-              CONFIGURATIONS
-            </span>
+          <div className="flex items-center gap-2 mb-1 text-xs font-black text-[#4F7CFF] uppercase tracking-wider">
+            <Settings className="w-4 h-4" />
+            <span>PREFERENCES</span>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-white">
-            Settings & Preferences
+          <h1 className="text-2xl sm:text-3xl font-black text-[#243047]">
+            Account & App Settings
           </h1>
-          <p className="text-xs sm:text-sm text-slate-400 mt-1">
-            Manage your student profile, educational simulator difficulty, and privacy controls.
+          <p className="text-xs sm:text-sm text-slate-600 mt-1">
+            Customize your learning pace, Byte tips, and student passport details.
           </p>
         </div>
 
         {savedSuccess && (
-          <div className="px-3.5 py-1.5 rounded-lg bg-emerald-950 border border-emerald-700 text-emerald-300 text-xs font-mono flex items-center gap-1.5">
+          <div className="px-4 py-2 rounded-2xl bg-emerald-100 border border-emerald-300 text-emerald-800 text-xs font-bold flex items-center gap-2 animate-in fade-in">
             <Check className="w-4 h-4" />
-            <span>Preferences saved</span>
+            <span>Preferences saved!</span>
           </div>
         )}
       </div>
 
       <form onSubmit={handleSave} className="space-y-6">
         {/* Profile Details */}
-        <div className="p-6 rounded-2xl bg-[#0e172a] border border-slate-800 shadow-xl space-y-4">
-          <h2 className="text-base font-semibold text-white flex items-center gap-2">
-            <Shield className="w-4 h-4 text-blue-400" />
-            <span>Student Identity & Institution</span>
+        <div className="p-6 sm:p-7 rounded-3xl bg-white border border-slate-200 shadow-sm space-y-5">
+          <h2 className="text-base font-black text-[#243047] flex items-center gap-2">
+            <Shield className="w-5 h-5 text-[#4F7CFF]" />
+            <span>Student Profile Details</span>
           </h2>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-mono text-slate-400 mb-1">
+              <label className="block text-xs font-bold text-slate-600 mb-1">
                 Student Name
               </label>
               <input
                 type="text"
                 value={name}
-                onChange={e => setName(e.target.value)}
-                className="w-full px-3 py-2 text-xs bg-[#0a0f1d] border border-slate-700 rounded-lg text-white focus:outline-none focus:border-blue-500"
+                onChange={(e) => setName(e.target.value)}
+                className="w-full px-3.5 py-2.5 text-xs bg-slate-50 border border-slate-200 rounded-xl text-[#243047] font-medium focus:outline-none focus:border-[#4F7CFF] focus:bg-white transition-colors"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-mono text-slate-400 mb-1">
-                University Email
+              <label className="block text-xs font-bold text-slate-600 mb-1">
+                School Email
               </label>
               <input
                 type="email"
                 value={email}
-                onChange={e => setEmail(e.target.value)}
-                className="w-full px-3 py-2 text-xs bg-[#0a0f1d] border border-slate-700 rounded-lg text-white focus:outline-none focus:border-blue-500"
+                onChange={(e) => setEmail(e.target.value)}
+                className="w-full px-3.5 py-2.5 text-xs bg-slate-50 border border-slate-200 rounded-xl text-[#243047] font-medium focus:outline-none focus:border-[#4F7CFF] focus:bg-white transition-colors"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-mono text-slate-400 mb-1">
-                Institution
+              <label className="block text-xs font-bold text-slate-600 mb-1">
+                School or Organization
               </label>
               <input
                 type="text"
                 value={institution}
-                onChange={e => setInstitution(e.target.value)}
-                className="w-full px-3 py-2 text-xs bg-[#0a0f1d] border border-slate-700 rounded-lg text-white focus:outline-none focus:border-blue-500"
+                onChange={(e) => setInstitution(e.target.value)}
+                className="w-full px-3.5 py-2.5 text-xs bg-slate-50 border border-slate-200 rounded-xl text-[#243047] font-medium focus:outline-none focus:border-[#4F7CFF] focus:bg-white transition-colors"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-mono text-slate-400 mb-1">
-                Major / Program
+              <label className="block text-xs font-bold text-slate-600 mb-1">
+                Grade / Cyber Club
               </label>
               <input
                 type="text"
                 value={major}
-                onChange={e => setMajor(e.target.value)}
-                className="w-full px-3 py-2 text-xs bg-[#0a0f1d] border border-slate-700 rounded-lg text-white focus:outline-none focus:border-blue-500"
+                onChange={(e) => setMajor(e.target.value)}
+                className="w-full px-3.5 py-2.5 text-xs bg-slate-50 border border-slate-200 rounded-xl text-[#243047] font-medium focus:outline-none focus:border-[#4F7CFF] focus:bg-white transition-colors"
               />
             </div>
           </div>
         </div>
 
-        {/* Simulation Preferences */}
-        <div className="p-6 rounded-2xl bg-[#0e172a] border border-slate-800 shadow-xl space-y-4">
-          <h2 className="text-base font-semibold text-white flex items-center gap-2">
-            <Sliders className="w-4 h-4 text-blue-400" />
-            <span>Simulator Rigor & Guidance</span>
+        {/* Learning Preferences */}
+        <div className="p-6 sm:p-7 rounded-3xl bg-white border border-slate-200 shadow-sm space-y-5">
+          <h2 className="text-base font-black text-[#243047] flex items-center gap-2">
+            <Sliders className="w-5 h-5 text-[#8B6CFF]" />
+            <span>Learning Mode & Hints</span>
           </h2>
 
           <div className="space-y-3 text-xs">
-            <div className="flex items-center justify-between p-3 rounded-xl bg-[#0a0f1d] border border-slate-800">
+            <div className="flex items-center justify-between p-4 rounded-2xl bg-slate-50 border border-slate-200">
               <div>
-                <span className="font-semibold text-white block">Drill Difficulty Calibration</span>
-                <span className="text-slate-400 text-[11px]">
-                  Automatically adjusts scenario deception subtlety based on your Trust Score.
+                <span className="font-bold text-[#243047] block">Mission Difficulty</span>
+                <span className="text-slate-500 text-xs">
+                  Automatically adjusts trickiness based on your Cyber Smart Score.
                 </span>
               </div>
               <select
                 value={drillDifficulty}
-                onChange={e => setDrillDifficulty(e.target.value)}
-                className="px-2.5 py-1 bg-slate-900 border border-slate-700 rounded text-slate-200 text-xs font-mono"
+                onChange={(e) => setDrillDifficulty(e.target.value)}
+                className="px-3 py-1.5 bg-white border border-slate-200 rounded-xl text-[#243047] font-bold text-xs shadow-2xs"
               >
-                <option value="Adaptive">Adaptive (Recommended)</option>
-                <option value="Beginner">Beginner (Explicit Clues)</option>
-                <option value="Advanced">Advanced (Subtle Indicators)</option>
+                <option value="Adaptive">Smart Adaptive (Recommended)</option>
+                <option value="Beginner">Beginner (Extra Hints)</option>
+                <option value="Advanced">Advanced (Tricky Scenarios)</option>
               </select>
             </div>
 
-            <div className="flex items-center justify-between p-3 rounded-xl bg-[#0a0f1d] border border-slate-800">
+            <div className="flex items-center justify-between p-4 rounded-2xl bg-slate-50 border border-slate-200">
               <div>
-                <span className="font-semibold text-white block">Immediate AI Debrief</span>
-                <span className="text-slate-400 text-[11px]">
-                  Open comprehensive technical feedback automatically after committing a decision.
+                <span className="font-bold text-[#243047] block">Instant Byte Debrief</span>
+                <span className="text-slate-500 text-xs">
+                  Show Byte's celebratory breakdown immediately after making a decision.
                 </span>
               </div>
               <input
                 type="checkbox"
                 defaultChecked
-                className="w-4 h-4 accent-blue-600 rounded"
+                className="w-4 h-4 accent-[#4F7CFF] rounded cursor-pointer"
               />
             </div>
           </div>
         </div>
 
         {/* Notification Preferences */}
-        <div className="p-6 rounded-2xl bg-[#0e172a] border border-slate-800 shadow-xl space-y-4">
-          <h2 className="text-base font-semibold text-white flex items-center gap-2">
-            <Bell className="w-4 h-4 text-blue-400" />
-            <span>Notification & Reminders</span>
+        <div className="p-6 sm:p-7 rounded-3xl bg-white border border-slate-200 shadow-sm space-y-5">
+          <h2 className="text-base font-black text-[#243047] flex items-center gap-2">
+            <Bell className="w-5 h-5 text-amber-500" />
+            <span>Reminders & Streaks</span>
           </h2>
 
           <div className="space-y-3 text-xs">
-            <div className="flex items-center justify-between p-3 rounded-xl bg-[#0a0f1d] border border-slate-800">
+            <div className="flex items-center justify-between p-4 rounded-2xl bg-slate-50 border border-slate-200">
               <div>
-                <span className="font-semibold text-white block">Weekly Trust Score Digest</span>
-                <span className="text-slate-400 text-[11px]">
-                  Receive weekly summary of score changes and recommended modules.
+                <span className="font-bold text-[#243047] block">Weekly Cyber Report</span>
+                <span className="text-slate-500 text-xs">
+                  Get a weekly recap of your Cyber Smart Score and newly earned trophies.
                 </span>
               </div>
               <input
                 type="checkbox"
                 checked={weeklyDigest}
-                onChange={e => setWeeklyDigest(e.target.checked)}
-                className="w-4 h-4 accent-blue-600 rounded"
+                onChange={(e) => setWeeklyDigest(e.target.checked)}
+                className="w-4 h-4 accent-[#4F7CFF] rounded cursor-pointer"
               />
             </div>
 
-            <div className="flex items-center justify-between p-3 rounded-xl bg-[#0a0f1d] border border-slate-800">
+            <div className="flex items-center justify-between p-4 rounded-2xl bg-slate-50 border border-slate-200">
               <div>
-                <span className="font-semibold text-white block">MFA Push Drill Reminders</span>
-                <span className="text-slate-400 text-[11px]">
-                  Simulate surprise push prompts to build vigilance against MFA fatigue.
+                <span className="font-bold text-[#243047] block">Daily Cyber Streak Reminder</span>
+                <span className="text-slate-500 text-xs">
+                  Friendly ping from Byte to keep your daily streak alive.
                 </span>
               </div>
               <input
                 type="checkbox"
                 checked={mfaReminders}
-                onChange={e => setMfaReminders(e.target.checked)}
-                className="w-4 h-4 accent-blue-600 rounded"
+                onChange={(e) => setMfaReminders(e.target.checked)}
+                className="w-4 h-4 accent-[#4F7CFF] rounded cursor-pointer"
               />
             </div>
           </div>
@@ -221,7 +219,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
         <div className="flex justify-end">
           <button
             type="submit"
-            className="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-medium text-xs transition-colors flex items-center gap-2 shadow-xs"
+            className="px-6 py-3 rounded-2xl bg-[#4F7CFF] hover:bg-[#3D6CE6] text-white font-black text-xs transition-colors flex items-center gap-2 shadow-xs"
           >
             <Save className="w-4 h-4" />
             <span>Save Preferences</span>
@@ -230,21 +228,21 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
       </form>
 
       {/* Danger Zone: Reset Data */}
-      <div className="p-6 rounded-2xl bg-rose-950/20 border border-rose-900/40 space-y-3">
-        <h3 className="text-sm font-semibold text-rose-300">Data Management</h3>
-        <p className="text-xs text-slate-400">
-          Reset local student session progress, restore baseline Trust Score (0), and reset module progress.
+      <div className="p-6 rounded-3xl bg-rose-50 border border-rose-200 space-y-3">
+        <h3 className="text-sm font-black text-rose-800">Reset Progress</h3>
+        <p className="text-xs text-rose-700">
+          Want to start fresh from the beginning? This resets your completed missions and score to the initial baseline.
         </p>
         <button
           onClick={() => {
-            if (confirm('Are you sure you want to reset your local student state?')) {
+            if (confirm('Are you sure you want to reset your student progress to the beginning?')) {
               onResetData();
             }
           }}
-          className="px-3.5 py-1.5 rounded-lg bg-rose-900/40 hover:bg-rose-900/60 border border-rose-700 text-rose-200 text-xs font-mono transition-colors flex items-center gap-1.5"
+          className="px-4 py-2 rounded-xl bg-white hover:bg-rose-100 border border-rose-300 text-rose-700 text-xs font-bold transition-colors flex items-center gap-1.5"
         >
           <RotateCcw className="w-3.5 h-3.5" />
-          <span>Reset Student State</span>
+          <span>Reset My Student Progress</span>
         </button>
       </div>
     </div>

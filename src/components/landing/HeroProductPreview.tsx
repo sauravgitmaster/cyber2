@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { TrustScoreGauge } from '../common/TrustScoreGauge';
-import { ShieldCheck, Bot, ArrowRight, Mail, AlertTriangle, Check, Terminal, ExternalLink, ShieldAlert } from 'lucide-react';
+import { ShieldCheck, ArrowRight, Mail, AlertTriangle, Check, Search, Shield, Zap } from 'lucide-react';
+import { ByteMascot } from '../common/ByteMascot';
 
 interface HeroProductPreviewProps {
   onStartSkillCheck: () => void;
@@ -14,189 +14,184 @@ export const HeroProductPreview: React.FC<HeroProductPreviewProps> = ({
   const [selectedChoice, setSelectedChoice] = useState<'link' | 'inspect' | 'direct' | null>(null);
 
   return (
-    <div className="w-full rounded-lg border border-[#1e293b] bg-[#0c121e] overflow-hidden text-slate-200 text-left">
-      {/* Workstation Header Bar */}
-      <div className="px-4 py-2.5 bg-[#090d16] border-b border-[#1a2233] flex items-center justify-between font-mono text-xs">
+    <div className="w-full rounded-3xl border-2 border-blue-200/80 bg-white overflow-hidden text-[#243047] text-left shadow-lg">
+      {/* Top Header Bar */}
+      <div className="px-5 py-3.5 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <div className="flex gap-1.5">
-            <span className="w-2.5 h-2.5 rounded-full bg-[#1e293b]" />
-            <span className="w-2.5 h-2.5 rounded-full bg-[#1e293b]" />
-            <span className="w-2.5 h-2.5 rounded-full bg-[#1e293b]" />
-          </div>
-          <span className="text-slate-400 text-[11px] ml-1">
-            SIMULATION // SCENARIO-01: PHISHING INSPECTION
+          <span className="w-3 h-3 rounded-full bg-rose-400 inline-block" />
+          <span className="w-3 h-3 rounded-full bg-amber-400 inline-block" />
+          <span className="w-3 h-3 rounded-full bg-emerald-400 inline-block" />
+          <span className="text-xs font-bold text-slate-700 ml-2">
+            🎯 MINI-MISSION PREVIEW: The Sneaky School Email
           </span>
         </div>
-        <div className="flex items-center gap-2">
-          <span className="text-[10px] text-blue-400 bg-blue-950/60 border border-blue-800/60 px-2 py-0.5 rounded-[3px] font-mono">
-            LIVE INTERACTIVE DEMO
-          </span>
-        </div>
+        <span className="text-[11px] font-black text-[#4F7CFF] bg-blue-50 border border-blue-200 px-3 py-1 rounded-full">
+          TRY IT NOW
+        </span>
       </div>
 
-      {/* Main Workstation Layout */}
-      <div className="p-4 sm:p-5 grid grid-cols-1 lg:grid-cols-12 gap-4">
-        {/* Left Column: Simulated Mail & Decision Console (7 cols) */}
+      {/* Main Interactive Demo Area */}
+      <div className="p-5 sm:p-6 grid grid-cols-1 lg:grid-cols-12 gap-5">
+        {/* Left Column: Simulated Email (7 cols) */}
         <div className="lg:col-span-7 space-y-3">
-          <div className="p-3.5 rounded-[4px] bg-[#080d17] border border-[#1a2337] space-y-2.5">
-            <div className="flex items-center justify-between border-b border-[#141d2f] pb-2 text-xs">
-              <div className="flex items-center gap-2 text-slate-300 font-mono text-[11px]">
-                <Mail className="w-3.5 h-3.5 text-blue-400" />
-                <span className="font-semibold text-white">INBOX SIMULATOR</span>
+          <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-2.5">
+            <div className="flex items-center justify-between border-b border-slate-200/80 pb-2 text-xs">
+              <div className="flex items-center gap-2 text-slate-700 font-bold text-xs">
+                <Mail className="w-4 h-4 text-[#4F7CFF]" />
+                <span>Inbox Preview</span>
               </div>
-              <span className="text-[10px] font-mono text-amber-400 bg-amber-950/40 border border-amber-800/40 px-1.5 py-0.2 rounded">
-                FLAGGED ADVERSARIAL
+              <span className="text-[11px] font-bold text-amber-800 bg-amber-100 px-2 py-0.5 rounded-full">
+                ⚠️ Needs Review
               </span>
             </div>
 
             {/* Email Header Inspector */}
-            <div className="text-[11px] font-mono bg-[#05080f] p-2.5 rounded border border-[#121927] space-y-1 text-slate-400">
-              <div><span className="text-slate-400">Subject:</span> <span className="text-slate-200 font-medium">[URGENT] Campus Single Sign-On Access Terminating</span></div>
-              <div><span className="text-slate-400">Sender:</span> <span className="text-amber-300">Identity Desk &lt;support@univ-auth-sso.net&gt;</span></div>
-              <div><span className="text-slate-400">Authentication:</span> <span className="text-rose-400">DKIM: Fail • SPF: SoftFail</span></div>
+            <div className="text-xs bg-white p-3 rounded-xl border border-slate-200 space-y-1">
+              <div>
+                <span className="text-slate-400 font-bold mr-1">From:</span>
+                <span className="text-[#243047] font-bold">School IT Helpdesk</span>
+                <span className="text-slate-600 font-mono text-[11px] ml-1">&lt;support@school-login-update.cc&gt;</span>
+              </div>
+              <div>
+                <span className="text-slate-400 font-bold mr-1">Subject:</span>
+                <span className="text-amber-800 font-bold">[URGENT] Account closing in 2 hours!</span>
+              </div>
             </div>
 
-            <div className="text-xs text-slate-300 leading-relaxed font-sans pt-1">
-              "Your student account credentials have failed the quarterly directory migration. Failure to re-verify your multi-factor identity within 2 hours will result in course portal lockout."
-            </div>
+            <p className="text-xs text-slate-600 leading-relaxed pt-1 font-medium">
+              "Your student password has expired! Click below immediately or you won't be able to turn in homework today."
+            </p>
 
             {/* Interactive Decision Options */}
-            <div className="space-y-1.5 pt-2 border-t border-[#141d2f]">
-              <span className="text-[10px] font-mono text-slate-400 uppercase tracking-wider block">
-                Select Your Response:
+            <div className="space-y-2 pt-2 border-t border-slate-200">
+              <span className="text-xs font-black text-slate-700 uppercase tracking-wide block">
+                What would you click?
               </span>
+
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                 <button
                   onClick={() => setSelectedChoice('link')}
-                  className={`p-2 rounded-[4px] text-xs text-left border transition-colors ${
+                  className={`p-3 rounded-2xl text-left border-2 transition-all ${
                     selectedChoice === 'link'
-                      ? 'bg-rose-950/40 border-rose-600 text-rose-200'
-                      : 'bg-[#0b101c] border-[#1a2336] text-slate-300 hover:border-slate-600'
+                      ? 'bg-rose-50 border-rose-400 text-rose-900 shadow-2xs'
+                      : 'bg-white border-slate-200 text-slate-700 hover:border-slate-300'
                   }`}
                 >
-                  <div className="font-medium text-[11px]">A. Click Urgent Link</div>
-                  <div className="text-[10px] text-slate-400 mt-0.5">Follow provided URL</div>
+                  <div className="font-bold text-xs">⚠️ Click the link</div>
+                  <div className="text-[11px] text-slate-600 mt-0.5">Quickly sign in</div>
                 </button>
 
                 <button
                   onClick={() => setSelectedChoice('inspect')}
-                  className={`p-2 rounded-[4px] text-xs text-left border transition-colors ${
+                  className={`p-3 rounded-2xl text-left border-2 transition-all ${
                     selectedChoice === 'inspect'
-                      ? 'bg-blue-950/40 border-blue-500 text-blue-200'
-                      : 'bg-[#0b101c] border-[#1a2336] text-slate-300 hover:border-slate-600'
+                      ? 'bg-blue-50 border-blue-400 text-blue-900 shadow-2xs'
+                      : 'bg-white border-slate-200 text-slate-700 hover:border-slate-300'
                   }`}
                 >
-                  <div className="font-medium text-[11px]">B. Inspect Headers</div>
-                  <div className="text-[10px] text-slate-400 mt-0.5">Check root domain</div>
+                  <div className="font-bold text-xs">🔍 Inspect address</div>
+                  <div className="text-[11px] text-slate-600 mt-0.5">Look at the domain</div>
                 </button>
 
                 <button
                   onClick={() => setSelectedChoice('direct')}
-                  className={`p-2 rounded-[4px] text-xs text-left border transition-colors ${
+                  className={`p-3 rounded-2xl text-left border-2 transition-all ${
                     selectedChoice === 'direct'
-                      ? 'bg-emerald-950/40 border-emerald-500 text-emerald-200'
-                      : 'bg-[#0b101c] border-[#1a2336] text-slate-300 hover:border-slate-600'
+                      ? 'bg-emerald-50 border-emerald-400 text-emerald-900 shadow-2xs'
+                      : 'bg-white border-slate-200 text-slate-700 hover:border-slate-300'
                   }`}
                 >
-                  <div className="font-medium text-[11px]">C. Direct Portal</div>
-                  <div className="text-[10px] text-slate-400 mt-0.5">Navigate via bookmark</div>
+                  <div className="font-bold text-xs">🚩 Report & use bookmark</div>
+                  <div className="text-[11px] text-slate-600 mt-0.5">Safe direct login</div>
                 </button>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Right Column: Real-Time Evaluator & Trust Score Feedback (5 cols) */}
+        {/* Right Column: Real-Time Feedback from Byte */}
         <div className="lg:col-span-5 space-y-3 flex flex-col justify-between">
-          <div className="p-3.5 rounded-[4px] bg-[#080d17] border border-[#1a2337] space-y-3">
-            <div className="flex items-center justify-between border-b border-[#141d2f] pb-2 text-xs">
-              <span className="text-[11px] font-mono text-slate-400 uppercase tracking-wider">
-                DECISION FEEDBACK
+          <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-3">
+            <div className="flex items-center justify-between border-b border-slate-200 pb-2 text-xs">
+              <span className="font-black text-slate-600 uppercase tracking-wide">
+                BYTE'S FEEDBACK
               </span>
-              <span className="text-[10px] font-mono text-blue-400">AUTOMATED ANALYSIS</span>
+              <span className="text-[11px] font-bold text-[#4F7CFF]">AI MENTOR</span>
             </div>
 
             {selectedChoice === null ? (
-              <div className="py-4 text-center text-xs text-slate-400 font-mono space-y-1">
-                <Terminal className="w-5 h-5 mx-auto text-slate-400" />
-                <p>Select an action above to trigger real-time AI security analysis.</p>
+              <div className="py-4 text-center text-xs text-slate-500 space-y-2">
+                <ByteMascot mood="thinking" size="sm" />
+                <p className="font-medium">
+                  Click an option above to see what Byte would say!
+                </p>
               </div>
             ) : selectedChoice === 'link' ? (
               <div className="space-y-2 text-xs">
-                <div className="flex items-center gap-1.5 text-rose-400 font-medium font-mono text-[11px]">
-                  <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
-                  <span>COMPROMISE DETECTED (-15 Trust Score)</span>
+                <div className="flex items-center gap-2 text-rose-600 font-bold">
+                  <AlertTriangle className="w-4 h-4 shrink-0" />
+                  <span>Uh-oh! That was a trap!</span>
                 </div>
-                <p className="text-slate-300 leading-relaxed text-[11px]">
-                  The domain <code className="text-rose-300 font-mono bg-rose-950/50 px-1 py-0.5 rounded">univ-auth-sso.net</code> is an adversarial lookalike registered 3 days ago. Following the link submits your session token to an attacker proxy.
+                <p className="text-slate-600 leading-relaxed font-medium">
+                  The domain ends in <code className="bg-rose-100 text-rose-800 px-1 py-0.5 rounded font-mono">.cc</code>, not your school’s address. A scammer created this fake website to steal passwords!
                 </p>
               </div>
             ) : selectedChoice === 'inspect' ? (
               <div className="space-y-2 text-xs">
-                <div className="flex items-center gap-1.5 text-blue-400 font-medium font-mono text-[11px]">
-                  <Check className="w-3.5 h-3.5 shrink-0" />
-                  <span>ATTACK IDENTIFIED (+8 Trust Score)</span>
+                <div className="flex items-center gap-2 text-[#4F7CFF] font-bold">
+                  <Check className="w-4 h-4 shrink-0" />
+                  <span>Great detective work!</span>
                 </div>
-                <p className="text-slate-300 leading-relaxed text-[11px]">
-                  Header examination revealed SPF SoftFail and a fraudulent registrar. You successfully verified the sender before taking action.
+                <p className="text-slate-600 leading-relaxed font-medium">
+                  You noticed that the email came from <code>school-login-update.cc</code>. Your real school uses <code>.edu</code> or <code>.org</code>. Well spotted!
                 </p>
               </div>
             ) : (
               <div className="space-y-2 text-xs">
-                <div className="flex items-center gap-1.5 text-emerald-400 font-medium font-mono text-[11px]">
-                  <Check className="w-3.5 h-3.5 shrink-0" />
-                  <span>OPTIMAL PROTOCOL (+12 Trust Score)</span>
+                <div className="flex items-center gap-2 text-emerald-600 font-bold">
+                  <Check className="w-4 h-4 shrink-0" />
+                  <span>Master move! +10 Smart Score</span>
                 </div>
-                <p className="text-slate-300 leading-relaxed text-[11px]">
-                  Bypassing the message and navigating directly to your verified bookmark neutralizes deceptive links completely.
+                <p className="text-slate-600 leading-relaxed font-medium">
+                  By opening your real school website from your trusted bookmarks, scammers have zero chance of fooling you!
                 </p>
               </div>
             )}
           </div>
 
-          {/* Metric Preview */}
-          <div className="p-3.5 rounded-[4px] bg-[#080d17] border border-[#1a2337] flex items-center justify-between">
+          {/* Cyber Smart Score Box */}
+          <div className="p-4 rounded-2xl bg-blue-50/70 border border-blue-200 flex items-center justify-between">
             <div>
-              <span className="text-[10px] font-mono text-slate-400 uppercase tracking-wider block">
-                DIGITAL TRUST SCORE
+              <span className="text-[11px] font-black text-slate-500 uppercase tracking-wider block">
+                CYBER SMART SCORE
               </span>
               <div className="flex items-baseline gap-2 mt-0.5">
-                <span className="text-lg font-bold font-mono text-white">
-                  {selectedChoice === 'link' ? '65' : selectedChoice === 'inspect' ? '88' : selectedChoice === 'direct' ? '92' : '80'}
+                <span className="text-xl font-black text-[#243047]">
+                  {selectedChoice === 'link' ? '65' : selectedChoice === 'inspect' ? '88' : selectedChoice === 'direct' ? '94' : '80'}
                 </span>
-                <span className="text-xs font-mono text-slate-400">/ 100</span>
+                <span className="text-xs font-bold text-slate-500">/ 100</span>
                 {selectedChoice && (
-                  <span className={`text-xs font-mono font-medium ${selectedChoice === 'link' ? 'text-rose-400' : 'text-emerald-400'}`}>
-                    {selectedChoice === 'link' ? '-15' : selectedChoice === 'inspect' ? '+8' : '+12'}
+                  <span
+                    className={`text-xs font-black ${
+                      selectedChoice === 'link' ? 'text-rose-600' : 'text-emerald-600'
+                    }`}
+                  >
+                    {selectedChoice === 'link' ? '-15' : selectedChoice === 'inspect' ? '+8' : '+14'}
                   </span>
                 )}
               </div>
             </div>
-            <div className="text-right">
-              <span className="text-[10px] font-mono text-slate-400 block uppercase">STATUS</span>
-              <span className="text-xs font-mono text-slate-200">
-                {selectedChoice === 'link' ? 'Vulnerable' : 'Defended'}
-              </span>
-            </div>
+
+            <button
+              onClick={onStartSkillCheck}
+              className="px-4 py-2 rounded-xl bg-[#4F7CFF] hover:bg-[#3D6CE6] text-white font-bold text-xs transition-colors flex items-center gap-1.5 shadow-2xs"
+            >
+              <span>Play More</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </button>
           </div>
         </div>
-      </div>
-
-      {/* Workstation Footer */}
-      <div className="px-4 py-2.5 bg-[#090d16] border-t border-[#1a2233] flex flex-col sm:flex-row items-center justify-between gap-2 text-xs font-mono text-slate-400">
-        <div className="flex items-center gap-2 text-[11px]">
-          <ShieldCheck className="w-3.5 h-3.5 text-blue-400" />
-          <span>Aligned with NIST SP 800-181 & CISA Cyber Hygiene Principles</span>
-        </div>
-        <button
-          onClick={onStartSkillCheck}
-          className="text-blue-400 hover:text-blue-300 text-xs font-sans font-medium flex items-center gap-1"
-        >
-          <span>Take Full Diagnostic Assessment</span>
-          <ArrowRight className="w-3.5 h-3.5" />
-        </button>
       </div>
     </div>
   );
 };
-

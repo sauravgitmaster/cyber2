@@ -3,16 +3,16 @@ import { ActivePage, SkillCheckResult } from '../types';
 import { initialSkillCheckQuestions } from '../data/mockData';
 import { TrustScoreGauge } from '../components/common/TrustScoreGauge';
 import {
-  CheckSquare,
   ArrowRight,
   ArrowLeft,
   ShieldCheck,
-  AlertCircle,
-  TrendingUp,
   Sparkles,
   RefreshCw,
   Compass,
+  Zap,
+  CheckCircle2,
 } from 'lucide-react';
+import { ByteMascot } from '../components/common/ByteMascot';
 
 interface SkillCheckPageProps {
   onNavigate: (page: ActivePage, params?: { pathId?: string }) => void;
@@ -35,7 +35,7 @@ export const SkillCheckPage: React.FC<SkillCheckPageProps> = ({
   const progressPercent = Math.round(((currentIndex + 1) / questions.length) * 100);
 
   const handleSelectOption = (optionId: string) => {
-    setSelectedAnswers(prev => ({
+    setSelectedAnswers((prev) => ({
       ...prev,
       [currentQ.id]: optionId,
     }));
@@ -43,13 +43,12 @@ export const SkillCheckPage: React.FC<SkillCheckPageProps> = ({
 
   const handleNext = () => {
     if (currentIndex < questions.length - 1) {
-      setCurrentIndex(prev => prev + 1);
+      setCurrentIndex((prev) => prev + 1);
     } else {
-      // Calculate final score
       let totalWeight = 0;
-      questions.forEach(q => {
+      questions.forEach((q) => {
         const chosenId = selectedAnswers[q.id];
-        const opt = q.options.find(o => o.id === chosenId);
+        const opt = q.options.find((o) => o.id === chosenId);
         totalWeight += opt ? opt.trustScoreWeight : 50;
       });
 
@@ -85,78 +84,72 @@ export const SkillCheckPage: React.FC<SkillCheckPageProps> = ({
   };
 
   return (
-    <div className="min-h-[calc(100vh-3.5rem)] bg-[#080d19] p-4 sm:p-6 lg:p-8 flex flex-col justify-center items-center text-slate-100">
+    <div className="p-4 sm:p-6 lg:p-8 flex flex-col justify-center items-center text-[#243047] font-sans">
       <div className="w-full max-w-2xl space-y-6">
         {!isFinished ? (
           /* Active Assessment Flow */
           <div className="space-y-6">
-            {/* Header & Progress */}
+            {/* Header & Progress Bar */}
             <div className="space-y-2">
-              <div className="flex items-center justify-between text-xs text-slate-400 font-mono">
-                <span className="flex items-center gap-1.5 text-blue-400">
-                  <CheckSquare className="w-4 h-4" />
-                  INITIAL SKILL CHECK
+              <div className="flex items-center justify-between text-xs font-bold text-slate-500">
+                <span className="flex items-center gap-1.5 text-[#4F7CFF]">
+                  <Zap className="w-4 h-4" />
+                  <span>QUICK CYBER CHECK</span>
                 </span>
                 <span>
-                  Question {currentIndex + 1} of {questions.length}
+                  Challenge {currentIndex + 1} of {questions.length}
                 </span>
               </div>
-              <div className="w-full h-1.5 bg-slate-800 rounded-full overflow-hidden">
+              <div className="w-full h-3 bg-slate-200/80 rounded-full overflow-hidden p-0.5">
                 <div
-                  className="h-full bg-blue-500 transition-all duration-300 rounded-full"
+                  className="h-full bg-gradient-to-r from-[#4F7CFF] to-[#8B6CFF] transition-all duration-300 rounded-full"
                   style={{ width: `${progressPercent}%` }}
                 />
               </div>
             </div>
 
-            {/* Title */}
-            <div>
-              <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-white">
-                Let's understand your cyber habits.
-              </h1>
-              <p className="text-xs sm:text-sm text-slate-400 mt-1">
-                Select the decision you would genuinely take in this practical situation.
-              </p>
-            </div>
-
-            {/* Scenario Card */}
-            <div className="p-6 rounded-2xl bg-[#0e172a] border border-slate-800 shadow-xl space-y-5">
+            {/* Situation Card */}
+            <div className="p-6 sm:p-8 rounded-3xl bg-white border border-slate-200 shadow-sm space-y-5">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-mono px-2 py-0.5 rounded bg-blue-950/70 border border-blue-800/60 text-blue-300">
+                <span className="text-xs font-bold px-3 py-1 rounded-full bg-blue-50 text-[#4F7CFF] border border-blue-100">
                   {currentQ.category}
                 </span>
-                <span className="text-xs text-slate-400 font-mono">
-                  Scenario #{currentQ.id}
+                <span className="text-xs text-slate-600 font-bold">
+                  Quest #{currentQ.id}
                 </span>
               </div>
 
               {/* Realistic situation box */}
-              <div className="p-4 rounded-xl bg-[#0a0f1d] border border-slate-800/80 text-sm sm:text-base text-slate-200 leading-relaxed font-sans">
-                {currentQ.scenario}
+              <div className="p-5 rounded-2xl bg-slate-50 border border-slate-200/90 text-sm sm:text-base text-[#243047] leading-relaxed font-medium">
+                "{currentQ.scenario}"
               </div>
 
+              <p className="text-xs font-bold text-slate-500">
+                What would you choose to do?
+              </p>
+
               {/* Options */}
-              <div className="space-y-3 pt-2">
-                {currentQ.options.map(opt => {
+              <div className="space-y-2.5">
+                {currentQ.options.map((opt) => {
                   const isSelected = selectedAnswers[currentQ.id] === opt.id;
                   return (
                     <button
                       key={opt.id}
                       onClick={() => handleSelectOption(opt.id)}
-                      className={`w-full text-left p-4 rounded-xl border text-xs sm:text-sm transition-all flex items-start gap-3 ${
+                      className={`w-full text-left p-4 rounded-2xl border-2 text-xs sm:text-sm transition-all flex items-start gap-3.5 ${
                         isSelected
-                          ? 'bg-blue-950/50 border-blue-500 text-white shadow-xs'
-                          : 'bg-[#0b1222] border-slate-800 hover:border-slate-700 text-slate-300'
+                          ? 'bg-blue-50 border-[#4F7CFF] text-[#243047] font-bold shadow-2xs scale-[1.01]'
+                          : 'bg-white border-slate-200 hover:border-blue-200 hover:bg-slate-50 text-slate-700 font-medium'
                       }`}
                     >
                       <div
-                        className={`w-5 h-5 rounded-full border flex items-center justify-center shrink-0 mt-0.5 text-xs font-mono ${
+                        className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 mt-0.5 ${
                           isSelected
-                            ? 'border-blue-400 bg-blue-500 text-white'
-                            : 'border-slate-700 text-slate-400'
+                            ? 'border-[#4F7CFF] bg-[#4F7CFF] text-white'
+                            : 'border-slate-300 text-transparent'
                         }`}
                       >
-                        {isSelected ? '✓' : ''}
+                        <CheckCircle2 className="w-3.5 h-3.5 text-white" />
                       </div>
                       <span className="flex-1 leading-relaxed">{opt.text}</span>
                     </button>
@@ -165,23 +158,27 @@ export const SkillCheckPage: React.FC<SkillCheckPageProps> = ({
               </div>
 
               {/* Navigation buttons */}
-              <div className="flex items-center justify-between pt-4 border-t border-slate-800">
+              <div className="flex items-center justify-between pt-4 border-t border-slate-100">
                 <button
-                  onClick={() => setCurrentIndex(prev => Math.max(0, prev - 1))}
+                  onClick={() => setCurrentIndex((prev) => Math.max(0, prev - 1))}
                   disabled={currentIndex === 0}
-                  className="px-3.5 py-2 rounded-lg border border-slate-700 text-slate-300 hover:bg-slate-800 disabled:opacity-30 text-xs transition-colors flex items-center gap-1.5"
+                  className="px-4 py-2 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 disabled:opacity-30 text-xs font-bold transition-colors flex items-center gap-1.5"
                 >
-                  <ArrowLeft className="w-3.5 h-3.5" />
-                  <span>Previous</span>
+                  <ArrowLeft className="w-4 h-4" />
+                  <span>Back</span>
                 </button>
 
                 <button
                   onClick={handleNext}
                   disabled={!selectedAnswers[currentQ.id]}
-                  className="px-5 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 disabled:opacity-40 text-white font-medium text-xs transition-colors flex items-center gap-2 shadow-xs"
+                  className="px-6 py-2.5 rounded-xl bg-[#4F7CFF] hover:bg-[#3D6CE6] disabled:opacity-40 text-white font-bold text-xs transition-all flex items-center gap-2 shadow-xs"
                 >
-                  <span>{currentIndex === questions.length - 1 ? 'Analyze Habits' : 'Next Question'}</span>
-                  <ArrowRight className="w-3.5 h-3.5" />
+                  <span>
+                    {currentIndex === questions.length - 1
+                      ? 'See My Cyber Profile'
+                      : 'Next Challenge'}
+                  </span>
+                  <ArrowRight className="w-4 h-4" />
                 </button>
               </div>
             </div>
@@ -190,64 +187,55 @@ export const SkillCheckPage: React.FC<SkillCheckPageProps> = ({
           /* Assessment Results Profile Screen */
           <div className="space-y-6 animate-in fade-in duration-300">
             <div className="text-center space-y-2">
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-950/70 border border-blue-800 text-blue-300 text-xs font-mono">
-                <Sparkles className="w-3.5 h-3.5 text-blue-400" />
-                ASSESSMENT PROFILE GENERATED
-              </span>
-              <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-white">
-                Your Cyber Habit Profile
+              <div className="flex justify-center">
+                <ByteMascot mood="excited" size="lg" />
+              </div>
+              <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-[#243047]">
+                Your Cyber Superhero Profile
               </h1>
-              <p className="text-xs sm:text-sm text-slate-400 max-w-md mx-auto">
-                Here is your baseline defensive posture based on your responses.
+              <p className="text-xs sm:text-sm text-slate-600 max-w-md mx-auto">
+                Awesome work completing the check! Here are your cyber instincts and superpowers.
               </p>
             </div>
 
             {/* Results Card */}
-            <div className="p-6 sm:p-8 rounded-2xl bg-[#0e172a] border border-slate-800 shadow-xl space-y-6">
-              {/* Score Display */}
-              <div className="flex flex-col sm:flex-row items-center justify-between p-5 rounded-xl bg-[#0a0f1d] border border-slate-800/80 gap-6">
-                <div className="space-y-1 text-center sm:text-left">
-                  <span className="text-[10px] font-mono uppercase tracking-wider text-slate-400 block">
-                    INITIAL METRIC
-                  </span>
-                  <div className="text-lg font-bold text-white">
-                    Digital Trust Score: {result?.digitalTrustScore ?? 0}/100
-                  </div>
-                  <p className="text-xs text-slate-400 max-w-xs">
-                    Your baseline readiness to detect social engineering and protect personal student credentials.
-                  </p>
-                </div>
-                <TrustScoreGauge score={result?.digitalTrustScore ?? 0} delta={result?.digitalTrustScore ?? 0} size="md" />
+            <div className="p-6 sm:p-8 rounded-3xl bg-white border border-slate-200 shadow-sm space-y-6">
+              {/* Score Display Gauge */}
+              <div className="p-6 rounded-2xl bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100">
+                <TrustScoreGauge
+                  score={result?.digitalTrustScore ?? 74}
+                  delta={result?.digitalTrustScore ?? 74}
+                  size="md"
+                  showWhyDetail={true}
+                />
               </div>
 
-              {/* Strengths & Needs Improvement Columns */}
+              {/* Strengths & Next Skills to practice */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {/* Strengths */}
-                <div className="p-4 rounded-xl bg-[#0a0f1d] border border-slate-800 space-y-2.5">
-                  <div className="flex items-center gap-2 text-blue-400 text-xs font-mono font-semibold uppercase">
-                    <ShieldCheck className="w-4 h-4" />
-                    <span>Strengths</span>
+                <div className="p-4 rounded-2xl bg-emerald-50/70 border border-emerald-200 space-y-2">
+                  <div className="flex items-center gap-2 text-emerald-800 text-xs font-black uppercase">
+                    <ShieldCheck className="w-4 h-4 text-emerald-600" />
+                    <span>Your Superpowers</span>
                   </div>
-                  <ul className="space-y-1.5 text-xs text-slate-200">
+                  <ul className="space-y-1.5 text-xs text-emerald-950 font-medium">
                     {result?.strengths.map((s, i) => (
                       <li key={i} className="flex items-center gap-2">
-                        <span className="w-1.5 h-1.5 rounded-full bg-blue-400" />
+                        <span className="text-emerald-600">✓</span>
                         <span>{s}</span>
                       </li>
                     ))}
                   </ul>
                 </div>
 
-                {/* Needs Improvement */}
-                <div className="p-4 rounded-xl bg-[#0a0f1d] border border-slate-800 space-y-2.5">
-                  <div className="flex items-center gap-2 text-amber-400 text-xs font-mono font-semibold uppercase">
-                    <AlertCircle className="w-4 h-4" />
-                    <span>Needs Improvement</span>
+                <div className="p-4 rounded-2xl bg-amber-50/70 border border-amber-200 space-y-2">
+                  <div className="flex items-center gap-2 text-amber-800 text-xs font-black uppercase">
+                    <Sparkles className="w-4 h-4 text-amber-600" />
+                    <span>Next Skills to Level Up</span>
                   </div>
-                  <ul className="space-y-1.5 text-xs text-slate-200">
+                  <ul className="space-y-1.5 text-xs text-amber-950 font-medium">
                     {result?.needsImprovement.map((w, i) => (
                       <li key={i} className="flex items-center gap-2">
-                        <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
+                        <span className="text-amber-600">★</span>
                         <span>{w}</span>
                       </li>
                     ))}
@@ -255,42 +243,46 @@ export const SkillCheckPage: React.FC<SkillCheckPageProps> = ({
                 </div>
               </div>
 
-              {/* Recommended Path Box */}
-              <div className="p-4 rounded-xl bg-blue-950/30 border border-blue-900/50 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              {/* Recommended Adventure Box */}
+              <div className="p-5 rounded-2xl bg-gradient-to-r from-blue-500 to-[#8B6CFF] text-white flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-sm">
                 <div>
-                  <span className="text-[10px] font-mono text-blue-300 uppercase tracking-wider block mb-0.5">
-                    RECOMMENDED PATH
+                  <span className="text-[11px] font-black text-yellow-300 uppercase tracking-wider block mb-0.5">
+                    RECOMMENDED ADVENTURE FOR YOU
                   </span>
-                  <div className="text-sm font-semibold text-white">
+                  <div className="text-base font-extrabold text-white">
                     {result?.recommendedPathTitle || 'Cyber Safety Fundamentals'}
                   </div>
-                  <p className="text-xs text-slate-400 mt-0.5">
-                    Targeted directly at your identified improvement areas in phishing and social engineering.
+                  <p className="text-xs text-blue-100 mt-0.5">
+                    Dive into fun missions to master spotting scams and tricky messages!
                   </p>
                 </div>
                 <button
-                  onClick={() => onNavigate('learning-paths', { pathId: result?.recommendedPathId || 'cyber-safety-fundamentals' })}
-                  className="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-medium text-xs transition-colors shrink-0 flex items-center gap-1.5"
+                  onClick={() =>
+                    onNavigate('learning-paths', {
+                      pathId: result?.recommendedPathId || 'cyber-safety-fundamentals',
+                    })
+                  }
+                  className="px-5 py-2.5 rounded-xl bg-white hover:bg-blue-50 text-[#4F7CFF] font-black text-xs transition-all shrink-0 flex items-center gap-2 shadow-xs"
                 >
-                  <Compass className="w-3.5 h-3.5" />
-                  <span>Start My Learning Path</span>
+                  <Compass className="w-4 h-4" />
+                  <span>Start Adventure</span>
                 </button>
               </div>
 
-              {/* Secondary Navigation */}
-              <div className="flex items-center justify-between pt-2 text-xs">
+              {/* Retake / Home links */}
+              <div className="flex items-center justify-between pt-2 text-xs font-bold">
                 <button
                   onClick={handleRetake}
-                  className="text-slate-400 hover:text-slate-200 flex items-center gap-1.5 transition-colors"
+                  className="text-slate-500 hover:text-slate-800 flex items-center gap-1.5 transition-colors"
                 >
                   <RefreshCw className="w-3.5 h-3.5" />
-                  <span>Retake Assessment</span>
+                  <span>Try Check Again</span>
                 </button>
                 <button
                   onClick={() => onNavigate('dashboard')}
-                  className="text-blue-400 hover:text-blue-300 font-medium transition-colors"
+                  className="text-[#4F7CFF] hover:underline"
                 >
-                  Go to Student Dashboard →
+                  Go to Adventure Home →
                 </button>
               </div>
             </div>

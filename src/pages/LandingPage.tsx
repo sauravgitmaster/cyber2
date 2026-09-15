@@ -5,15 +5,18 @@ import {
   ArrowRight,
   Lock,
   Eye,
-  Terminal,
   Compass,
-  FileCheck,
   ChevronRight,
   ShieldCheck,
   AlertTriangle,
   Globe,
-  Flame,
+  Sparkles,
+  Zap,
+  CheckCircle2,
+  Shield,
+  Star,
 } from 'lucide-react';
+import { ByteMascot } from '../components/common/ByteMascot';
 
 interface LandingPageProps {
   onNavigate: (page: ActivePage, params?: { pathId?: string }) => void;
@@ -22,88 +25,86 @@ interface LandingPageProps {
 
 export const LandingPage: React.FC<LandingPageProps> = ({ onNavigate, paths }) => {
   return (
-    <div className="min-h-screen bg-[#070b13] text-slate-200 flex flex-col font-sans selection:bg-blue-600 selection:text-white">
-      {/* Top Quiet Navigation */}
-      <header className="border-b border-[#182133] bg-[#090d16] sticky top-0 z-40 px-4 sm:px-6 py-3 flex items-center justify-between">
-        <div className="flex items-center gap-2.5">
-          <div className="w-2.5 h-2.5 rounded-[2px] bg-blue-500" />
-          <span className="font-mono text-xs font-bold tracking-widest text-white uppercase">
-            CYBERMENTOR
-          </span>
-          <span className="text-[10px] font-mono text-slate-400 pl-1 hidden sm:inline">
-            // DEFENSIVE WORKSTATION
+    <div className="min-h-screen bg-[#F7F9FC] text-[#243047] flex flex-col font-sans selection:bg-blue-200">
+      {/* Friendly Top Navigation */}
+      <header className="border-b border-slate-200 bg-white/90 backdrop-blur-md sticky top-0 z-40 px-4 sm:px-8 py-3.5 flex items-center justify-between">
+        <div
+          onClick={() => onNavigate('dashboard')}
+          className="flex items-center gap-2.5 cursor-pointer group"
+        >
+          <ByteMascot mood="happy" size="xs" />
+          <span className="text-lg font-black text-[#243047] tracking-tight group-hover:text-[#4F7CFF] transition-colors">
+            CyberMentor <span className="text-[#4F7CFF]">AI</span>
           </span>
         </div>
 
-        <nav className="hidden md:flex items-center gap-6 text-xs text-slate-300 font-mono">
-          <a href="#threat-matrix" className="hover:text-white transition-colors">
-            THREAT FOCUS
+        <nav className="hidden md:flex items-center gap-6 text-xs font-bold text-slate-600">
+          <a href="#how-it-works" className="hover:text-[#4F7CFF] transition-colors">
+            How It Works
           </a>
-          <a href="#frameworks" className="hover:text-white transition-colors">
-            FRAMEWORKS
+          <a href="#adventures" className="hover:text-[#4F7CFF] transition-colors">
+            Adventures
           </a>
-          <a href="#curriculum" className="hover:text-white transition-colors">
-            CURRICULUM
-          </a>
-          <a href="#trust-score" className="hover:text-white transition-colors">
-            TRUST SCORE
+          <a href="#standards" className="hover:text-[#4F7CFF] transition-colors">
+            For Schools & Parents
           </a>
         </nav>
 
         <div className="flex items-center gap-2.5">
           <button
             onClick={() => onNavigate('dashboard')}
-            className="text-xs text-slate-300 hover:text-white px-3 py-1.5 rounded-[4px] border border-[#202c42] hover:border-slate-500 transition-colors"
+            className="text-xs font-bold text-slate-700 hover:text-[#4F7CFF] px-3.5 py-2 rounded-xl border border-slate-200 hover:bg-slate-50 transition-colors"
           >
-            Open Workstation
+            Enter App
           </button>
           <button
             onClick={() => onNavigate('skill-check')}
-            className="text-xs bg-blue-600 hover:bg-blue-500 text-white font-medium px-3.5 py-1.5 rounded-[4px] transition-colors flex items-center gap-1.5"
+            className="text-xs bg-[#4F7CFF] hover:bg-[#3D6CE6] text-white font-black px-4 py-2 rounded-xl transition-all shadow-xs hover:shadow-md flex items-center gap-1.5"
           >
-            <span>Skill Diagnostic</span>
+            <span>Start Free Check</span>
             <ArrowRight className="w-3.5 h-3.5" />
           </button>
         </div>
       </header>
 
-      {/* Hero Section */}
+      {/* Main Content */}
       <main className="flex-1">
+        {/* Hero Section */}
         <section className="pt-12 sm:pt-16 pb-12 px-4 sm:px-6 lg:px-8 max-w-6xl mx-auto text-center space-y-6">
-          <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-[4px] bg-[#0f1726] border border-[#1e2a42] text-[11px] text-blue-300 font-mono">
-            <span className="w-1.5 h-1.5 rounded-full bg-blue-400" />
-            PRACTICAL DEFENSIVE CYBER EDUCATION
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-blue-50 border border-blue-200 text-xs font-black text-[#4F7CFF]">
+            <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+            <span>INTERACTIVE CYBER DEFENSE FOR SCHOOL-AGE LEARNERS</span>
           </div>
 
-          <div className="space-y-3 max-w-3xl mx-auto">
-            <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight text-white leading-tight">
-              Practical cybersecurity education for everyday digital safety.
+          <div className="space-y-4 max-w-3xl mx-auto">
+            <h1 className="text-3xl sm:text-5xl font-black text-[#243047] leading-tight tracking-tight">
+              Cybersecurity made approachable, fun, and real.
             </h1>
-            <p className="text-xs sm:text-sm text-slate-300 max-w-2xl mx-auto leading-relaxed">
-              Traditional cyber training relies on passive multiple-choice tests. CyberMentor puts students in interactive incident scenarios with automated feedback and measurable Trust Score metrics.
+            <p className="text-sm sm:text-base text-slate-600 max-w-2xl mx-auto leading-relaxed font-medium">
+              No boring lectures or scary jargon! Learn to spot scams, defeat phishing tricks, build unbreakable passwords, and protect your identity through interactive story missions with Byte.
             </p>
           </div>
 
-          {/* Primary Action Row */}
-          <div className="flex flex-wrap items-center justify-center gap-3 pt-1 font-mono text-xs">
+          {/* Primary Action Buttons */}
+          <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
             <button
               onClick={() => onNavigate('skill-check')}
-              className="px-5 py-2.5 rounded-[4px] bg-blue-600 hover:bg-blue-500 text-white font-medium transition-colors flex items-center gap-2"
+              className="px-6 py-3.5 rounded-2xl bg-[#4F7CFF] hover:bg-[#3D6CE6] text-white font-black text-sm transition-all shadow-md hover:shadow-lg active:scale-98 flex items-center gap-2"
             >
-              <span>Initial Diagnostic Test</span>
-              <ArrowRight className="w-3.5 h-3.5" />
+              <span>Take Quick Cyber Check</span>
+              <ArrowRight className="w-4 h-4" />
             </button>
             <button
               onClick={() => onNavigate('learning-paths')}
-              className="px-5 py-2.5 rounded-[4px] bg-[#101726] hover:bg-[#162035] border border-[#202c44] text-slate-200 font-medium transition-colors flex items-center gap-2"
+              className="px-6 py-3.5 rounded-2xl bg-white hover:bg-slate-50 border-2 border-slate-200 text-slate-700 font-black text-sm transition-all flex items-center gap-2 shadow-xs"
             >
-              <Compass className="w-3.5 h-3.5 text-blue-400" />
-              <span>Explore Syllabus</span>
+              <Compass className="w-4 h-4 text-[#4F7CFF]" />
+              <span>Browse Adventures</span>
             </button>
           </div>
 
-          {/* Interactive Simulation Workstation Preview */}
-          <div className="pt-6 pb-2 max-w-5xl mx-auto">
+          {/* Interactive Live Mini-Mission Preview */}
+          <div className="pt-8 pb-4 max-w-5xl mx-auto">
             <HeroProductPreview
               onStartSkillCheck={() => onNavigate('skill-check')}
               onExplorePaths={() => onNavigate('learning-paths')}
@@ -111,122 +112,120 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigate, paths }) =
           </div>
         </section>
 
-        {/* SECTION: Threat Focus Matrix */}
-        <section id="threat-matrix" className="py-16 border-t border-[#182133] bg-[#090e18]">
+        {/* SECTION: 4 Core Adventures */}
+        <section id="adventures" className="py-16 border-t border-slate-200 bg-white">
           <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10">
-            <div className="text-left border-b border-[#182235] pb-4 flex flex-col sm:flex-row sm:items-baseline justify-between gap-2">
-              <div>
-                <span className="text-[10px] font-mono text-blue-400 uppercase tracking-wider block">
-                  DEFENSIVE CORE
-                </span>
-                <h2 className="text-xl font-semibold text-white mt-0.5">
-                  Real Threats Faced by Students & Professionals
-                </h2>
-              </div>
-              <span className="text-xs font-mono text-slate-400">
-                4 Specialized Curriculum Tracks
+            <div className="text-center max-w-2xl mx-auto space-y-2">
+              <span className="text-xs font-black text-[#4F7CFF] uppercase tracking-wider">
+                CORE SKILLS
               </span>
+              <h2 className="text-2xl sm:text-3xl font-black text-[#243047]">
+                What You'll Learn to Defend
+              </h2>
+              <p className="text-xs sm:text-sm text-slate-600 font-medium">
+                Four essential skills to keep you, your family, and your school accounts safe online.
+              </p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              {/* Threat 1 */}
-              <div className="p-4 rounded-[4px] bg-[#0c121e] border border-[#1b2538] flex flex-col justify-between space-y-3">
-                <div className="space-y-2">
-                  <div className="w-7 h-7 rounded-[4px] bg-[#111a2d] border border-[#1f2d47] flex items-center justify-center text-blue-400">
-                    <AlertTriangle className="w-3.5 h-3.5" />
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
+              {/* Adventure 1 */}
+              <div className="p-6 rounded-3xl bg-blue-50/50 border-2 border-blue-100 hover:border-[#4F7CFF] transition-all flex flex-col justify-between space-y-4">
+                <div className="space-y-3">
+                  <div className="w-12 h-12 rounded-2xl bg-blue-100 flex items-center justify-center text-blue-600">
+                    <AlertTriangle className="w-6 h-6" />
                   </div>
-                  <h3 className="text-sm font-semibold text-white">Phishing & Pretexts</h3>
-                  <p className="text-xs text-slate-300 leading-relaxed">
-                    Lookalike domain analysis, spear-phishing pretexts, urgent wire/account threats, and DKIM/SPF header verification.
+                  <h3 className="text-base font-black text-[#243047]">Spot Scams & Phishing</h3>
+                  <p className="text-xs text-slate-600 leading-relaxed font-medium">
+                    Learn to recognize fake login pages, tricky urgent texts, and lookalike web links before clicking.
                   </p>
                 </div>
-                <div className="text-[10px] font-mono text-slate-400 pt-2 border-t border-[#141c2c]">
+                <div className="text-xs font-bold text-[#4F7CFF] pt-2 border-t border-blue-100">
                   Track: Social Engineering
                 </div>
               </div>
 
-              {/* Threat 2 */}
-              <div className="p-4 rounded-[4px] bg-[#0c121e] border border-[#1b2538] flex flex-col justify-between space-y-3">
-                <div className="space-y-2">
-                  <div className="w-7 h-7 rounded-[4px] bg-[#111a2d] border border-[#1f2d47] flex items-center justify-center text-blue-400">
-                    <Lock className="w-3.5 h-3.5" />
+              {/* Adventure 2 */}
+              <div className="p-6 rounded-3xl bg-purple-50/50 border-2 border-purple-100 hover:border-[#8B6CFF] transition-all flex flex-col justify-between space-y-4">
+                <div className="space-y-3">
+                  <div className="w-12 h-12 rounded-2xl bg-purple-100 flex items-center justify-center text-purple-600">
+                    <Lock className="w-6 h-6" />
                   </div>
-                  <h3 className="text-sm font-semibold text-white">Password & MFA Hygiene</h3>
-                  <p className="text-xs text-slate-300 leading-relaxed">
-                    High-entropy passphrases, credential reuse cascades, multi-factor fatigue/bombing, and secure hardware authenticators.
+                  <h3 className="text-base font-black text-[#243047]">Fortress Passwords & 2FA</h3>
+                  <p className="text-xs text-slate-600 leading-relaxed font-medium">
+                    Craft memorable passphrases that supercomputers can't crack, and unlock two-step verification security.
                   </p>
                 </div>
-                <div className="text-[10px] font-mono text-slate-400 pt-2 border-t border-[#141c2c]">
+                <div className="text-xs font-bold text-[#8B6CFF] pt-2 border-t border-purple-100">
                   Track: Identity & Access
                 </div>
               </div>
 
-              {/* Threat 3 */}
-              <div className="p-4 rounded-[4px] bg-[#0c121e] border border-[#1b2538] flex flex-col justify-between space-y-3">
-                <div className="space-y-2">
-                  <div className="w-7 h-7 rounded-[4px] bg-[#111a2d] border border-[#1f2d47] flex items-center justify-center text-blue-400">
-                    <Eye className="w-3.5 h-3.5" />
+              {/* Adventure 3 */}
+              <div className="p-6 rounded-3xl bg-emerald-50/50 border-2 border-emerald-100 hover:border-[#40C98A] transition-all flex flex-col justify-between space-y-4">
+                <div className="space-y-3">
+                  <div className="w-12 h-12 rounded-2xl bg-emerald-100 flex items-center justify-center text-emerald-600">
+                    <Eye className="w-6 h-6" />
                   </div>
-                  <h3 className="text-sm font-semibold text-white">Privacy & OSINT Leaks</h3>
-                  <p className="text-xs text-slate-300 leading-relaxed">
-                    Metadata stripping from shared documents, open-source intelligence gathering, and social survey question harvesting.
+                  <h3 className="text-base font-black text-[#243047]">Privacy & Personal Data</h3>
+                  <p className="text-xs text-slate-600 leading-relaxed font-medium">
+                    Guard your personal information, photos, and school accounts from online trackers and snoops.
                   </p>
                 </div>
-                <div className="text-[10px] font-mono text-slate-400 pt-2 border-t border-[#141c2c]">
+                <div className="text-xs font-bold text-[#40C98A] pt-2 border-t border-emerald-100">
                   Track: Information Privacy
                 </div>
               </div>
 
-              {/* Threat 4 */}
-              <div className="p-4 rounded-[4px] bg-[#0c121e] border border-[#1b2538] flex flex-col justify-between space-y-3">
-                <div className="space-y-2">
-                  <div className="w-7 h-7 rounded-[4px] bg-[#111a2d] border border-[#1f2d47] flex items-center justify-center text-blue-400">
-                    <Globe className="w-3.5 h-3.5" />
+              {/* Adventure 4 */}
+              <div className="p-6 rounded-3xl bg-amber-50/50 border-2 border-amber-100 hover:border-[#FFC857] transition-all flex flex-col justify-between space-y-4">
+                <div className="space-y-3">
+                  <div className="w-12 h-12 rounded-2xl bg-amber-100 flex items-center justify-center text-amber-600">
+                    <Globe className="w-6 h-6" />
                   </div>
-                  <h3 className="text-sm font-semibold text-white">Safe Browsing & Rogue Files</h3>
-                  <p className="text-xs text-slate-300 leading-relaxed">
-                    Malvertising drive-bys, malicious browser extensions, USB drop hazards, and suspicious executable payloads.
+                  <h3 className="text-base font-black text-[#243047]">Safe Gaming & Downloads</h3>
+                  <p className="text-xs text-slate-600 leading-relaxed font-medium">
+                    Avoid sneaky malware hiding in game mods, free robux tricks, and suspicious browser extensions.
                   </p>
                 </div>
-                <div className="text-[10px] font-mono text-slate-400 pt-2 border-t border-[#141c2c]">
-                  Track: Endpoint Hygiene
+                <div className="text-xs font-bold text-amber-700 pt-2 border-t border-amber-100">
+                  Track: Safe Browsing
                 </div>
               </div>
             </div>
           </div>
         </section>
 
-        {/* SECTION: Framework Alignment */}
-        <section id="frameworks" className="py-14 border-t border-[#182133] bg-[#070b13]">
-          <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="p-5 rounded-lg bg-[#0c121e] border border-[#1b2538] flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-              <div className="space-y-1">
-                <span className="text-[10px] font-mono text-blue-400 uppercase tracking-wider block">
-                  STANDARDS & FRAMEWORKS
+        {/* SECTION: Standards & Real Curriculum */}
+        <section id="standards" className="py-14 border-t border-slate-200 bg-[#F7F9FC]">
+          <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="p-6 sm:p-8 rounded-3xl bg-white border border-slate-200 shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+              <div className="space-y-2">
+                <span className="text-xs font-black text-[#4F7CFF] uppercase tracking-wider block">
+                  REAL CYBER EDUCATION
                 </span>
-                <h3 className="text-base font-semibold text-white">
-                  Curriculum Mapped to Industry Security Frameworks
+                <h3 className="text-lg sm:text-xl font-black text-[#243047]">
+                  Aligned with Real Cyber Defense Standards
                 </h3>
-                <p className="text-xs text-slate-300 leading-relaxed max-w-2xl">
-                  Every scenario and assessment is strictly structured against recognized cybersecurity workforce and defense standards.
+                <p className="text-xs sm:text-sm text-slate-600 leading-relaxed max-w-xl font-medium">
+                  While presented in a friendly, approachable format, all scenarios and skills are mapped directly to official frameworks like NIST, CISA Cyber Hygiene, and MITRE ATT&CK.
                 </p>
               </div>
 
-              <div className="grid grid-cols-2 gap-2 text-xs font-mono shrink-0">
-                <div className="px-3 py-1.5 rounded bg-[#090e18] border border-[#192336] flex items-center gap-1.5 text-slate-200">
-                  <ShieldCheck className="w-3.5 h-3.5 text-blue-400" />
-                  <span>NIST SP 800-181</span>
+              <div className="grid grid-cols-2 gap-2 text-xs font-bold shrink-0">
+                <div className="px-3.5 py-2 rounded-xl bg-blue-50 text-blue-700 border border-blue-200 flex items-center gap-2">
+                  <ShieldCheck className="w-4 h-4 text-[#4F7CFF]" />
+                  <span>NIST Aligned</span>
                 </div>
-                <div className="px-3 py-1.5 rounded bg-[#090e18] border border-[#192336] flex items-center gap-1.5 text-slate-200">
-                  <ShieldCheck className="w-3.5 h-3.5 text-blue-400" />
-                  <span>CISA Cyber Hygiene</span>
+                <div className="px-3.5 py-2 rounded-xl bg-purple-50 text-purple-700 border border-purple-200 flex items-center gap-2">
+                  <ShieldCheck className="w-4 h-4 text-[#8B6CFF]" />
+                  <span>CISA Hygiene</span>
                 </div>
-                <div className="px-3 py-1.5 rounded bg-[#090e18] border border-[#192336] flex items-center gap-1.5 text-slate-200">
-                  <ShieldCheck className="w-3.5 h-3.5 text-blue-400" />
-                  <span>OWASP Top 10</span>
+                <div className="px-3.5 py-2 rounded-xl bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center gap-2">
+                  <ShieldCheck className="w-4 h-4 text-[#40C98A]" />
+                  <span>OWASP Concepts</span>
                 </div>
-                <div className="px-3 py-1.5 rounded bg-[#090e18] border border-[#192336] flex items-center gap-1.5 text-slate-200">
-                  <ShieldCheck className="w-3.5 h-3.5 text-blue-400" />
+                <div className="px-3.5 py-2 rounded-xl bg-amber-50 text-amber-800 border border-amber-200 flex items-center gap-2">
+                  <ShieldCheck className="w-4 h-4 text-amber-500" />
                   <span>MITRE ATT&CK</span>
                 </div>
               </div>
@@ -234,110 +233,52 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigate, paths }) =
           </div>
         </section>
 
-        {/* SECTION: Featured Learning Paths */}
-        <section id="curriculum" className="py-16 border-t border-[#182133] bg-[#090e18]">
-          <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
-            <div className="flex flex-col sm:flex-row sm:items-baseline justify-between gap-2 border-b border-[#182235] pb-4">
-              <div>
-                <span className="text-[10px] font-mono text-blue-400 uppercase tracking-wider block">
-                  SYLLABUS
-                </span>
-                <h2 className="text-xl font-semibold text-white mt-0.5">
-                  Available Learning Paths
-                </h2>
-              </div>
-              <button
-                onClick={() => onNavigate('learning-paths')}
-                className="text-xs font-mono text-blue-400 hover:text-blue-300 flex items-center gap-1"
-              >
-                <span>View Full Curriculum</span>
-                <ChevronRight className="w-3.5 h-3.5" />
-              </button>
+        {/* SECTION: CTA Callout */}
+        <section className="py-16 bg-gradient-to-r from-blue-600 to-[#8B6CFF] text-white text-center">
+          <div className="max-w-3xl mx-auto px-4 sm:px-6 space-y-5">
+            <div className="flex justify-center">
+              <ByteMascot mood="excited" size="lg" />
             </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {paths.slice(0, 6).map(path => (
-                <div
-                  key={path.id}
-                  onClick={() => onNavigate('learning-paths', { pathId: path.id })}
-                  className="p-4 rounded-[4px] bg-[#0c121e] border border-[#1a2336] hover:border-blue-500/60 cursor-pointer transition-colors flex flex-col justify-between space-y-3 group"
-                >
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between text-[10px] font-mono">
-                      <span className="px-1.5 py-0.2 rounded bg-[#121a2c] text-blue-300">
-                        {path.category}
-                      </span>
-                      <span className="text-slate-400">
-                        {path.difficulty}
-                      </span>
-                    </div>
-                    <h3 className="text-sm font-semibold text-white group-hover:text-blue-300 transition-colors">
-                      {path.title}
-                    </h3>
-                    <p className="text-xs text-slate-400 line-clamp-2 leading-relaxed">
-                      {path.description}
-                    </p>
-                  </div>
-
-                  <div className="pt-2 border-t border-[#141d2f] flex items-center justify-between text-[11px] font-mono text-slate-400">
-                    <span>{path.moduleCount} Modules • {path.estimatedTime}</span>
-                    <span className="text-blue-400 group-hover:translate-x-0.5 transition-transform">
-                      Inspect →
-                    </span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        {/* SECTION: Trust Score Callout */}
-        <section id="trust-score" className="py-16 border-t border-[#182133] bg-[#070b13]">
-          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-5">
-            <span className="text-[10px] font-mono text-blue-400 uppercase tracking-wider block">
-              OBJECTIVE PROGRESSION
-            </span>
-            <h2 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">
-              The Digital Trust Score
+            <h2 className="text-2xl sm:text-4xl font-black text-white tracking-tight">
+              Ready to begin your Cyber Adventure?
             </h2>
-            <p className="text-xs sm:text-sm text-slate-300 max-w-2xl mx-auto leading-relaxed">
-              Every learner starts at a baseline of 0. Your score dynamically updates as you complete modules, navigate realistic scenarios, and demonstrate resilience under adversarial conditions.
+            <p className="text-xs sm:text-base text-blue-100 max-w-lg mx-auto font-medium">
+              Join thousands of students learning to navigate the digital world safely, smartly, and confidently.
             </p>
 
-            <div className="pt-2 flex flex-wrap items-center justify-center gap-3 font-mono text-xs">
+            <div className="pt-2 flex flex-wrap items-center justify-center gap-3">
               <button
                 onClick={() => onNavigate('skill-check')}
-                className="px-5 py-2.5 rounded-[4px] bg-blue-600 hover:bg-blue-500 text-white font-medium transition-colors flex items-center gap-2"
+                className="px-6 py-3.5 rounded-2xl bg-white hover:bg-blue-50 text-[#4F7CFF] font-black text-sm transition-all shadow-md flex items-center gap-2"
               >
-                <span>Establish Baseline Score</span>
-                <ArrowRight className="w-3.5 h-3.5" />
+                <span>Start Free Cyber Check</span>
+                <ArrowRight className="w-4 h-4" />
               </button>
               <button
                 onClick={() => onNavigate('dashboard')}
-                className="px-5 py-2.5 rounded-[4px] bg-[#101726] hover:bg-[#162035] border border-[#202c44] text-slate-200 transition-colors"
+                className="px-6 py-3.5 rounded-2xl bg-blue-700/60 hover:bg-blue-700 text-white font-black text-sm border border-white/20 transition-colors"
               >
-                Return to Workstation
+                Go to Student Dashboard
               </button>
             </div>
           </div>
         </section>
       </main>
 
-      {/* Quiet Footer */}
-      <footer className="border-t border-[#182133] bg-[#090d16] py-6 px-6 text-xs text-slate-400 font-mono">
+      {/* Friendly Clean Footer */}
+      <footer className="border-t border-slate-200 bg-white py-6 px-6 text-xs text-slate-500">
         <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
-          <div className="flex items-center gap-2 text-slate-300">
-            <span className="w-2 h-2 rounded-[2px] bg-blue-500" />
-            <span className="font-semibold text-white">CyberMentor</span>
-            <span>— Cybersecurity Learning Workstation</span>
+          <div className="flex items-center gap-2 font-bold text-slate-700">
+            <ByteMascot mood="happy" size="xs" />
+            <span>CyberMentor AI — Approchable Cybersecurity for Everyone</span>
           </div>
-          <div className="flex items-center gap-4 text-[11px] text-slate-400">
-            <span>Clean Baseline</span>
+          <div className="flex items-center gap-4 text-xs font-medium">
+            <span>Safe & Educational</span>
             <span>•</span>
-            <span>Zero-Trust Learning</span>
+            <span>Zero Intimidation</span>
             <span>•</span>
-            <button onClick={() => onNavigate('auth')} className="hover:text-white">
-              Student Auth
+            <button onClick={() => onNavigate('auth')} className="text-[#4F7CFF] hover:underline font-bold">
+              Student Sign In
             </button>
           </div>
         </div>
@@ -345,4 +286,3 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigate, paths }) =
     </div>
   );
 };
-

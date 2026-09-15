@@ -3,15 +3,13 @@ import { ActivePage, SkillCategoryScore, UserProfile } from '../types';
 import { TrustScoreGauge } from '../components/common/TrustScoreGauge';
 import {
   BarChart3,
-  TrendingUp,
   ShieldCheck,
   AlertTriangle,
   ArrowRight,
-  Compass,
-  CheckCircle2,
-  Calendar,
-  Layers,
+  TrendingUp,
+  Sparkles,
 } from 'lucide-react';
+import { ByteMascot } from '../components/common/ByteMascot';
 
 interface AnalyticsPageProps {
   user: UserProfile;
@@ -24,134 +22,142 @@ export const AnalyticsPage: React.FC<AnalyticsPageProps> = ({
   skills,
   onNavigate,
 }) => {
-  // Historical 5-week trust score data points
   const timelineData = [
-    { period: 'Week 1', score: 58, label: 'Baseline Test' },
-    { period: 'Week 2', score: 62, label: 'Passwords Vault' },
-    { period: 'Week 3', score: 66, label: 'Privacy Pruning' },
-    { period: 'Week 4', score: 68, label: 'MFA Defense' },
-    { period: 'Current', score: user.digitalTrustScore, label: '+6 This Week' },
+    { period: 'Week 1', score: 58, label: 'First Check' },
+    { period: 'Week 2', score: 62, label: 'Password Mission' },
+    { period: 'Week 3', score: 66, label: 'Privacy Mission' },
+    { period: 'Week 4', score: 68, label: '2FA Mission' },
+    { period: 'Current', score: user.digitalTrustScore, label: '+6 This Week!' },
   ];
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8 space-y-6 max-w-6xl mx-auto text-slate-100 animate-in fade-in duration-200">
+    <div className="p-4 sm:p-6 lg:p-8 space-y-6 max-w-6xl mx-auto text-[#243047] font-sans">
       {/* Top Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-800 pb-5">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 pb-5">
         <div>
-          <div className="flex items-center gap-2 mb-1">
-            <BarChart3 className="w-5 h-5 text-blue-400" />
-            <span className="text-xs font-mono text-blue-400 uppercase tracking-wider">
-              PERFORMANCE INTELLIGENCE
-            </span>
+          <div className="flex items-center gap-2 mb-1 text-xs font-black text-[#4F7CFF] uppercase tracking-wider">
+            <BarChart3 className="w-4 h-4" />
+            <span>MY CYBER GROWTH</span>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-white">
-            Progress & Analytics
+          <h1 className="text-2xl sm:text-3xl font-black text-[#243047]">
+            Progress & Skill Growth
           </h1>
-          <p className="text-xs sm:text-sm text-slate-400 mt-1">
-            Clear tracking of your security hygiene, defensive skill balance, and score evolution.
+          <p className="text-xs sm:text-sm text-slate-600 mt-1">
+            See how your cyber smarts grow with every completed adventure and mission!
           </p>
         </div>
 
-        <div className="px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-xs font-mono text-slate-300">
-          Evaluated across {user.scenariosCompletedCount} practical decision drills
+        <div className="px-4 py-2 rounded-2xl bg-blue-50 border border-blue-200 text-xs font-bold text-[#4F7CFF]">
+          🎯 {user.scenariosCompletedCount} missions completed so far
         </div>
       </div>
 
-      {/* Top Cards: Trust Score + Highlight Focus Areas */}
+      {/* Top Cards: Cyber Smart Score + Strengths + Focus Area */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-        {/* Card 1: Trust Score */}
-        <div className="p-5 rounded-2xl bg-[#0e172a] border border-slate-800 shadow-xl flex items-center justify-between">
+        {/* Card 1: Score */}
+        <div className="p-6 rounded-3xl bg-white border border-slate-200 shadow-sm flex items-center justify-between">
           <div className="space-y-1">
-            <span className="text-[10px] font-mono uppercase text-slate-400 block">
-              AGGREGATE RATING
+            <span className="text-[11px] font-black uppercase text-slate-500 block">
+              OVERALL RATING
             </span>
-            <h3 className="text-sm font-semibold text-white">Digital Trust Score</h3>
-            <span className="text-xs font-mono text-blue-400">+{user.trustScoreDelta} this week</span>
-            <p className="text-[11px] text-slate-400 mt-1">Top 15% in university cohort</p>
+            <h3 className="text-base font-black text-[#243047]">Cyber Smart Score</h3>
+            <span className="text-xs font-extrabold text-emerald-600">
+              +{user.trustScoreDelta} this week ⭐
+            </span>
+            <p className="text-xs text-slate-500 mt-1">Top tier in your Cyber Club</p>
           </div>
           <TrustScoreGauge score={user.digitalTrustScore} delta={user.trustScoreDelta} size="sm" showLabel={false} />
         </div>
 
         {/* Card 2: Strongest Skill */}
-        <div className="p-5 rounded-2xl bg-[#0e172a] border border-slate-800 shadow-xl flex flex-col justify-between space-y-2">
+        <div className="p-6 rounded-3xl bg-white border border-slate-200 shadow-sm flex flex-col justify-between space-y-2">
           <div className="flex items-center justify-between">
-            <span className="text-[10px] font-mono uppercase text-slate-400">
-              STRONGEST SKILL
+            <span className="text-[11px] font-black uppercase text-emerald-700">
+              STRONGEST SUPERPOWER
             </span>
-            <span className="text-xs font-mono text-emerald-400 font-bold">86%</span>
+            <span className="text-xs font-black text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">
+              86% Mastered
+            </span>
           </div>
           <div>
-            <h3 className="text-base font-bold text-white flex items-center gap-1.5">
-              <ShieldCheck className="w-4 h-4 text-emerald-400" />
+            <h3 className="text-base font-black text-[#243047] flex items-center gap-1.5">
+              <ShieldCheck className="w-5 h-5 text-emerald-600" />
               <span>Password Security</span>
             </h3>
-            <p className="text-xs text-slate-400 mt-1">
-              Consistent entropy creation, zero password reuse, and proper authenticator app usage.
+            <p className="text-xs text-slate-600 mt-1 leading-relaxed">
+              Unbreakable passphrases, never sharing passwords, and enabling 2FA!
             </p>
           </div>
-          <span className="text-[11px] font-mono text-emerald-300">Proficient Tier</span>
+          <span className="text-xs font-bold text-emerald-700">Pro Defender Tier</span>
         </div>
 
-        {/* Card 3: Focus Area */}
-        <div className="p-5 rounded-2xl bg-[#0e172a] border border-slate-800 shadow-xl flex flex-col justify-between space-y-2">
+        {/* Card 3: Next Skill to Level Up */}
+        <div className="p-6 rounded-3xl bg-white border border-slate-200 shadow-sm flex flex-col justify-between space-y-2">
           <div className="flex items-center justify-between">
-            <span className="text-[10px] font-mono uppercase text-amber-400">
-              FOCUS AREA
+            <span className="text-[11px] font-black uppercase text-amber-700">
+              NEXT SKILL TO LEVEL UP
             </span>
-            <span className="text-xs font-mono text-amber-400 font-bold">54%</span>
+            <span className="text-xs font-black text-amber-700 bg-amber-50 px-2 py-0.5 rounded-full">
+              54% Progress
+            </span>
           </div>
           <div>
-            <h3 className="text-base font-bold text-white flex items-center gap-1.5">
-              <AlertTriangle className="w-4 h-4 text-amber-400" />
+            <h3 className="text-base font-black text-[#243047] flex items-center gap-1.5">
+              <Sparkles className="w-5 h-5 text-amber-500" />
               <span>Social Engineering</span>
             </h3>
-            <p className="text-xs text-slate-400 mt-1">
-              Needs practice recognizing authority pretexting and phone verification traps.
+            <p className="text-xs text-slate-600 mt-1 leading-relaxed">
+              Practice spotting tricky callers, fake prize messages, and imposters.
             </p>
           </div>
           <button
-            onClick={() => onNavigate('learning-paths', { pathId: 'cyber-safety-fundamentals', moduleId: 'mod-soc-eng-basics' })}
-            className="text-xs text-blue-400 hover:text-blue-300 font-medium flex items-center gap-1"
+            onClick={() =>
+              onNavigate('learning-paths', {
+                pathId: 'cyber-safety-fundamentals',
+                moduleId: 'mod-soc-eng-basics',
+              })
+            }
+            className="text-xs text-[#4F7CFF] hover:underline font-bold flex items-center gap-1"
           >
-            <span>Launch Social Engineering Basics</span>
-            <ArrowRight className="w-3 h-3" />
+            <span>Play Social Engineering Mission</span>
+            <ArrowRight className="w-3.5 h-3.5" />
           </button>
         </div>
       </div>
 
       {/* Skill Categories Breakdown */}
-      <div className="p-6 rounded-2xl bg-[#0e172a] border border-slate-800 shadow-xl space-y-5">
-        <div className="flex items-center justify-between border-b border-slate-800/80 pb-3">
+      <div className="p-6 sm:p-7 rounded-3xl bg-white border border-slate-200 shadow-sm space-y-5">
+        <div className="flex items-center justify-between border-b border-slate-100 pb-3">
           <div>
-            <span className="text-[10px] font-mono text-slate-400 uppercase tracking-wider block">
-              DIAGNOSTIC MATRIX
+            <span className="text-[11px] font-black text-slate-500 uppercase tracking-wider block">
+              SKILL RADAR
             </span>
-            <h2 className="text-lg font-bold text-white">Skill Categories & Readiness</h2>
+            <h2 className="text-lg font-black text-[#243047]">Cyber Skills Mastery</h2>
           </div>
-          <span className="text-xs font-mono text-slate-400">Target Benchmark: 80%</span>
+          <span className="text-xs font-bold text-slate-500">Goal: 80%+ on all skills</span>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {skills.map(skill => {
+          {skills.map((skill) => {
             const isStrength = skill.score >= 80;
             const isDeveloping = skill.score < 65;
 
             return (
               <div
                 key={skill.id}
-                className="p-4 rounded-xl bg-[#0a0f1d] border border-slate-800/80 space-y-2.5"
+                className="p-4 rounded-2xl bg-slate-50/70 border border-slate-200/80 space-y-2.5"
               >
                 <div className="flex items-center justify-between text-xs">
-                  <span className="font-semibold text-white">{skill.name}</span>
-                  <div className="flex items-center gap-2 font-mono">
-                    <span className="text-slate-400">+{skill.change}%</span>
+                  <span className="font-black text-[#243047]">{skill.name}</span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-slate-500 font-bold">+{skill.change}%</span>
                     <span
-                      className={`font-bold ${
+                      className={`font-black text-xs px-2 py-0.5 rounded-full ${
                         isStrength
-                          ? 'text-emerald-400'
+                          ? 'bg-emerald-100 text-emerald-800'
                           : isDeveloping
-                          ? 'text-amber-400'
-                          : 'text-blue-400'
+                          ? 'bg-amber-100 text-amber-800'
+                          : 'bg-blue-100 text-[#4F7CFF]'
                       }`}
                     >
                       {skill.score}%
@@ -160,24 +166,22 @@ export const AnalyticsPage: React.FC<AnalyticsPageProps> = ({
                 </div>
 
                 {/* Progress bar */}
-                <div className="w-full h-2 bg-slate-800 rounded-full overflow-hidden">
+                <div className="w-full h-2.5 bg-slate-200 rounded-full overflow-hidden">
                   <div
                     className={`h-full rounded-full transition-all duration-500 ${
                       isStrength
-                        ? 'bg-emerald-500'
+                        ? 'bg-[#40C98A]'
                         : isDeveloping
-                        ? 'bg-amber-500'
-                        : 'bg-blue-500'
+                        ? 'bg-[#FFC857]'
+                        : 'bg-[#4F7CFF]'
                     }`}
                     style={{ width: `${skill.score}%` }}
                   />
                 </div>
 
-                <div className="flex items-center justify-between text-[11px] text-slate-400">
-                  <span className="truncate pr-2">{skill.description}</span>
-                  <span className="font-mono text-slate-300 shrink-0 font-medium">
-                    {skill.level}
-                  </span>
+                <div className="flex items-center justify-between text-xs text-slate-600">
+                  <span className="truncate pr-2 font-medium">{skill.description}</span>
+                  <span className="font-bold text-[#243047] shrink-0">{skill.level}</span>
                 </div>
               </div>
             );
@@ -185,34 +189,38 @@ export const AnalyticsPage: React.FC<AnalyticsPageProps> = ({
         </div>
       </div>
 
-      {/* Improvement Over Time Chart */}
-      <div className="p-6 rounded-2xl bg-[#0e172a] border border-slate-800 shadow-xl space-y-5">
+      {/* Progress Over Time Cards */}
+      <div className="p-6 sm:p-7 rounded-3xl bg-white border border-slate-200 shadow-sm space-y-5">
         <div className="flex items-center justify-between">
           <div>
-            <span className="text-[10px] font-mono text-slate-400 uppercase tracking-wider block">
-              LONGITUDINAL TREND
+            <span className="text-[11px] font-black text-slate-500 uppercase tracking-wider block">
+              WEEKLY TRACKER
             </span>
-            <h2 className="text-lg font-bold text-white">Digital Trust Score Progression</h2>
+            <h2 className="text-lg font-black text-[#243047]">Your Cyber Smart Score Journey</h2>
           </div>
-          <span className="text-xs font-mono text-blue-300">
-            Net Improvement: +14 Points
+          <span className="text-xs font-black text-[#4F7CFF] bg-blue-50 px-3 py-1 rounded-full border border-blue-200">
+            Total Gain: +14 Points 🚀
           </span>
         </div>
 
         {/* Timeline visualization */}
-        <div className="grid grid-cols-5 gap-3 pt-4">
+        <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 pt-2">
           {timelineData.map((item, i) => (
             <div
               key={i}
-              className="p-3.5 rounded-xl bg-[#0a0f1d] border border-slate-800 text-center flex flex-col justify-between space-y-2"
+              className={`p-4 rounded-2xl border text-center flex flex-col justify-between space-y-2 transition-all ${
+                i === timelineData.length - 1
+                  ? 'bg-blue-50/80 border-[#4F7CFF] shadow-2xs'
+                  : 'bg-slate-50 border-slate-200'
+              }`}
             >
-              <span className="text-[10px] font-mono text-slate-400 uppercase">
+              <span className="text-[11px] font-bold text-slate-500 uppercase">
                 {item.period}
               </span>
-              <div className="text-xl sm:text-2xl font-bold font-mono text-white">
+              <div className="text-2xl font-black text-[#243047]">
                 {item.score}
               </div>
-              <span className="text-[10px] text-blue-300 font-mono">
+              <span className="text-[11px] text-[#4F7CFF] font-bold truncate">
                 {item.label}
               </span>
             </div>

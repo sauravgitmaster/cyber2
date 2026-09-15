@@ -1,22 +1,21 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { ActivePage, ScenarioItem, ScenarioOption } from '../types';
 import { sampleScenarios } from '../data/mockData';
 import {
-  BrainCircuit,
   ArrowRight,
-  ShieldCheck,
-  ShieldAlert,
-  AlertTriangle,
+  Sparkles,
+  Zap,
   RotateCcw,
-  LayoutDashboard,
   CheckCircle2,
   XCircle,
-  FileSearch,
+  HelpCircle,
+  Shield,
+  ChevronDown,
+  ChevronUp,
+  Terminal,
   ExternalLink,
-  Flame,
-  MessageSquare,
-  Crosshair,
 } from 'lucide-react';
+import { ByteMascot } from '../components/common/ByteMascot';
 
 interface AiFeedbackPageProps {
   decisionData: {
@@ -36,157 +35,180 @@ export const AiFeedbackPage: React.FC<AiFeedbackPageProps> = ({
 }) => {
   const scenario = decisionData?.scenario || sampleScenarios[0];
   const option = decisionData?.option || scenario.options[2];
-  const previousScore = decisionData?.previousScore ?? 0;
-  const newScore = decisionData?.newScore ?? (option.isOptimal ? 8 : 0);
+  const previousScore = decisionData?.previousScore ?? 74;
+  const newScore = decisionData?.newScore ?? (option.isOptimal ? 82 : 74);
 
   const { feedback, scoreImpacts } = option;
   const isOptimal = option.isOptimal;
 
-  return (
-    <div className="p-4 sm:p-6 lg:p-8 space-y-5 max-w-5xl mx-auto text-slate-200">
-      {/* Debrief Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#182133] pb-4">
-        <div>
-          <div className="flex items-center gap-2 text-xs font-mono text-blue-400">
-            <Crosshair className="w-3.5 h-3.5" />
-            <span className="uppercase tracking-wider">POST-INCIDENT DEBRIEF // FORENSIC ANALYSIS</span>
-          </div>
-          <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-white mt-0.5">
-            Scenario Incident Debrief
-          </h1>
-          <p className="text-xs font-mono text-slate-400 mt-1">
-            Target Scenario: {scenario.title} ({scenario.category})
-          </p>
-        </div>
+  const [showTechnicalDetails, setShowTechnicalDetails] = useState(false);
 
-        {/* Outcome Badge & Delta */}
-        <div className="flex items-center gap-2.5 font-mono text-xs">
-          <div className="px-3 py-1.5 rounded-[4px] bg-[#090d16] border border-[#1b2538] flex items-center gap-2">
-            <span className="text-slate-400">TRUST DELTA:</span>
-            <span className="text-white font-bold">{previousScore}</span>
-            <span>→</span>
-            <span className={`font-bold ${isOptimal ? 'text-emerald-400' : 'text-rose-400'}`}>
-              {newScore} ({newScore >= previousScore ? `+${newScore - previousScore}` : newScore - previousScore})
-            </span>
-          </div>
-          <div className="px-3 py-1.5 rounded-[4px] bg-[#090d16] border border-[#1b2538] flex items-center gap-1.5 text-amber-400 font-bold">
-            +{scoreImpacts.xpDelta} XP
+  return (
+    <div className="p-4 sm:p-6 lg:p-8 space-y-6 max-w-4xl mx-auto text-[#243047] font-sans">
+      {/* Celebration / Encouragement Hero Card */}
+      <div
+        className={`rounded-3xl p-6 sm:p-8 border-2 shadow-sm relative overflow-hidden transition-all ${
+          isOptimal
+            ? 'bg-gradient-to-r from-emerald-50 via-teal-50 to-blue-50 border-emerald-300'
+            : 'bg-gradient-to-r from-amber-50 via-orange-50 to-yellow-50 border-amber-300'
+        }`}
+      >
+        <div className="flex flex-col sm:flex-row items-center sm:items-start gap-5">
+          <ByteMascot mood={isOptimal ? 'excited' : 'thinking'} size="lg" />
+
+          <div className="space-y-2 text-center sm:text-left flex-1">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider bg-white/80 border border-slate-200">
+              {isOptimal ? (
+                <>
+                  <span className="text-emerald-600">🎯 MISSION ACCOMPLISHED</span>
+                </>
+              ) : (
+                <>
+                  <span className="text-amber-700">🌱 PRACTICE MAKES PERFECT</span>
+                </>
+              )}
+            </div>
+
+            <h1 className="text-2xl sm:text-3xl font-black text-[#243047]">
+              {isOptimal
+                ? '🎉 Great catch! You spotted the trick.'
+                : '😬 Oops! That link was a trap.'}
+            </h1>
+
+            <p className="text-sm sm:text-base text-slate-700 leading-relaxed font-medium">
+              {feedback.summary}
+            </p>
+
+            {/* Score & XP Rewards Banner */}
+            <div className="pt-3 flex flex-wrap items-center justify-center sm:justify-start gap-3">
+              <div className="px-3.5 py-1.5 rounded-full bg-white border border-slate-200 text-xs font-bold text-[#243047] shadow-2xs flex items-center gap-1.5">
+                <Shield className="w-4 h-4 text-[#4F7CFF]" />
+                <span>Cyber Smart Score:</span>
+                <span className="text-emerald-700 font-black">
+                  +{isOptimal ? 8 : 2} ⭐
+                </span>
+              </div>
+
+              <div className="px-3.5 py-1.5 rounded-full bg-purple-100 border border-purple-200 text-xs font-bold text-purple-800 shadow-2xs flex items-center gap-1.5">
+                <Zap className="w-4 h-4 fill-purple-600 text-purple-600" />
+                <span>+{scoreImpacts.xpDelta || 30} XP</span>
+              </div>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Main Analysis Container */}
-      <div className="p-5 sm:p-6 rounded-[4px] bg-[#0c121e] border border-[#1b2538] space-y-5">
-        {/* Your Action & Evaluation Bar */}
-        <div className="p-3.5 rounded-[4px] bg-[#080d17] border border-[#182338] space-y-2 font-mono text-xs">
-          <div className="flex items-center justify-between">
-            <span className="text-slate-400 uppercase text-[10px] tracking-wider">YOUR COMMITTED ACTION</span>
-            <span
-              className={`px-2 py-0.5 rounded-[2px] text-[10px] font-bold uppercase ${
-                isOptimal
-                  ? 'bg-emerald-950/70 text-emerald-300 border border-emerald-800/60'
-                  : feedback.decisionQuality === 'Fair'
-                  ? 'bg-amber-950/70 text-amber-300 border border-amber-800/60'
-                  : 'bg-rose-950/70 text-rose-300 border border-rose-800/60'
-              }`}
-            >
-              Evaluation: {feedback.decisionQuality} Decision
-            </span>
-          </div>
-
-          <div className="text-white font-sans text-sm font-semibold">
-            Option {option.label}: "{option.text}"
-          </div>
-        </div>
-
-        {/* AI Mentor Operational Assessment */}
-        <div className="p-4 rounded-[4px] bg-[#081121] border border-blue-900/40 space-y-2">
-          <div className="flex items-center gap-1.5 text-xs font-mono text-blue-400">
-            <BrainCircuit className="w-3.5 h-3.5" />
-            <span className="font-semibold uppercase">AI MENTOR OPERATIONAL CRITIQUE</span>
-          </div>
-          <p className="text-xs sm:text-sm text-slate-200 leading-relaxed font-sans">
-            "{feedback.summary}"
+      {/* Main Breakdown Section */}
+      <div className="bg-white rounded-3xl border border-slate-200 p-6 sm:p-8 shadow-xs space-y-6">
+        {/* Your Chosen Action Card */}
+        <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-1">
+          <span className="text-[11px] font-black text-slate-500 uppercase tracking-wider block">
+            YOUR DECISION
+          </span>
+          <p className="text-sm font-bold text-[#243047]">
+            "{option.text}"
           </p>
         </div>
 
-        {/* Real-World Incident Case Study Comparison */}
-        <div className="p-4 rounded-[4px] bg-[#080d17] border border-[#1c283d] space-y-2">
-          <div className="flex items-center justify-between text-xs font-mono">
-            <span className="text-amber-400 uppercase tracking-wider font-semibold flex items-center gap-1.5">
-              <FileSearch className="w-3.5 h-3.5" />
-              REAL-WORLD INCIDENT PARALLEL // 2022 TWILIO OKTAPUS CAMPAIGN
-            </span>
-            <span className="text-slate-500 text-[10px]">MITRE ATT&CK T1566.002</span>
+        {/* Section: Here's what gave it away */}
+        <div className="space-y-3">
+          <h2 className="text-base sm:text-lg font-black text-[#243047] flex items-center gap-2">
+            <span>🔍</span>
+            <span>Here's what gave it away...</span>
+          </h2>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+            <div className="p-4 rounded-2xl bg-blue-50/60 border border-blue-100 space-y-1">
+              <strong className="text-blue-900 font-bold block text-xs uppercase tracking-wide">
+                Why this mattered
+              </strong>
+              <p className="text-slate-700 leading-relaxed text-xs">
+                {feedback.whyItMatters}
+              </p>
+            </div>
+
+            <div className="p-4 rounded-2xl bg-emerald-50/60 border border-emerald-100 space-y-1">
+              <strong className="text-emerald-900 font-bold block text-xs uppercase tracking-wide">
+                What you did well
+              </strong>
+              <p className="text-slate-700 leading-relaxed text-xs">
+                {feedback.whatYouDidWell}
+              </p>
+            </div>
           </div>
-          <p className="text-xs text-slate-300 leading-relaxed font-sans">
-            This scenario mirrors the "Oktapus" phishing kit deployed against over 130 organizations. Attackers sent SMS/email notifications claiming IT Okta sessions were expired with domains like <code>univ-sso-auth.org</code>. Victims who navigated out-of-band to their true bookmarks neutralized the campaign completely.
+        </div>
+
+        {/* Section: What would happen in real life */}
+        <div className="p-5 rounded-2xl bg-amber-50/60 border border-amber-200/80 space-y-2">
+          <div className="flex items-center gap-2 text-xs font-black text-amber-900 uppercase tracking-wider">
+            <span>🌍</span>
+            <span>WHAT WOULD HAPPEN IN REAL LIFE</span>
+          </div>
+          <p className="text-xs sm:text-sm text-amber-950 leading-relaxed">
+            In the real world, this exact trick was used by scammers to send fake messages claiming student portals were expiring. Students who reported the message or logged in directly from their bookmarks stopped the scam in its tracks!
           </p>
         </div>
 
-        {/* 4-Vector Technical Matrix */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-1 text-xs">
-          <div className="p-3.5 rounded-[4px] bg-[#080d17] border border-[#162136] space-y-1.5">
-            <span className="text-[10px] font-mono text-blue-400 uppercase tracking-wider block">
-              Why This Decision Matters
-            </span>
-            <p className="text-slate-300 leading-relaxed font-sans text-[11px]">
-              {feedback.whyItMatters}
-            </p>
-          </div>
-
-          <div className="p-3.5 rounded-[4px] bg-[#080d17] border border-[#162136] space-y-1.5">
-            <span className="text-[10px] font-mono text-emerald-400 uppercase tracking-wider block">
-              Strengths of Your Triage
-            </span>
-            <p className="text-slate-300 leading-relaxed font-sans text-[11px]">
-              {feedback.whatYouDidWell}
-            </p>
-          </div>
-
-          <div className="p-3.5 rounded-[4px] bg-[#080d17] border border-[#162136] space-y-1.5">
-            <span className="text-[10px] font-mono text-amber-400 uppercase tracking-wider block">
-              Latent Vulnerabilities & Traps
-            </span>
-            <p className="text-slate-300 leading-relaxed font-sans text-[11px]">
-              {feedback.watchOutFor}
-            </p>
-          </div>
-
-          <div className="p-3.5 rounded-[4px] bg-[#080d17] border border-[#162136] space-y-1.5">
-            <span className="text-[10px] font-mono text-cyan-400 uppercase tracking-wider block">
-              Recommended Next Action
-            </span>
-            <p className="text-slate-300 leading-relaxed font-sans text-[11px]">
-              {feedback.nextStepRecommendation}
-            </p>
-          </div>
-        </div>
-
-        {/* Debrief Action Row */}
-        <div className="pt-4 border-t border-[#182133] flex flex-wrap items-center justify-between gap-3 font-mono text-xs">
+        {/* Section: Want to know the technical details? (Expandable) */}
+        <div className="pt-2 border-t border-slate-100">
           <button
-            onClick={() => onNavigate('dashboard')}
-            className="px-3.5 py-2 rounded-[4px] border border-[#1b2538] text-slate-300 hover:bg-[#121927] transition-colors flex items-center gap-1.5"
+            onClick={() => setShowTechnicalDetails(!showTechnicalDetails)}
+            className="inline-flex items-center gap-2 text-xs font-bold text-[#4F7CFF] hover:text-[#3862D9] transition-colors"
           >
-            <LayoutDashboard className="w-3.5 h-3.5" />
-            <span>Return to Dashboard</span>
+            <Sparkles className="w-4 h-4 text-amber-500" />
+            <span>Want to see the technical security details?</span>
+            {showTechnicalDetails ? (
+              <ChevronUp className="w-4 h-4" />
+            ) : (
+              <ChevronDown className="w-4 h-4" />
+            )}
           </button>
 
-          <div className="flex items-center gap-2">
+          {showTechnicalDetails && (
+            <div className="mt-3 p-4 rounded-2xl bg-slate-50 border border-slate-200 text-xs space-y-3 font-mono animate-in fade-in duration-200">
+              <div className="flex items-center justify-between text-[11px] text-slate-500">
+                <span className="font-bold flex items-center gap-1.5">
+                  <Terminal className="w-3.5 h-3.5 text-[#4F7CFF]" />
+                  CYBER FORENSIC AUDIT
+                </span>
+                <span>MITRE ATT&CK T1566.002</span>
+              </div>
+              <p className="font-sans text-xs text-slate-700 leading-normal">
+                {feedback.watchOutFor}
+              </p>
+              <div className="p-3 rounded-xl bg-[#0a0f1d] text-slate-200 text-[11px] leading-relaxed">
+                <div>Attack Vector: Reverse-proxy adversary-in-the-middle (AiTM) phishing</div>
+                <div>Domain: auth-portal-verify.org (DMARC policy: softfail)</div>
+                <div>Mitigation: FIDO2 WebAuthn authentication; URL hostname boundary parsing</div>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Action Row */}
+        <div className="pt-4 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-3">
+          <button
+            onClick={() => onNavigate('dashboard')}
+            className="w-full sm:w-auto px-5 py-2.5 rounded-xl border border-slate-200 text-slate-700 hover:bg-slate-50 font-bold text-xs transition-colors"
+          >
+            Return to Home
+          </button>
+
+          <div className="flex items-center gap-2 w-full sm:w-auto">
             <button
               onClick={onOpenMentor}
-              className="px-3.5 py-2 rounded-[4px] bg-[#111929] hover:bg-[#162238] border border-[#1f2d47] text-blue-300 transition-colors flex items-center gap-1.5"
+              className="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-blue-50 hover:bg-blue-100 text-[#4F7CFF] font-bold text-xs border border-blue-200 flex items-center justify-center gap-1.5 transition-colors"
             >
-              <MessageSquare className="w-3.5 h-3.5 text-blue-400" />
-              <span>Discuss with Mentor</span>
+              <ByteMascot mood="thinking" size="xs" />
+              <span>Ask Byte About This</span>
             </button>
+
             <button
               onClick={() => onNavigate('interactive-scenario')}
-              className="px-4 py-2 rounded-[4px] bg-blue-600 hover:bg-blue-500 text-white font-medium transition-colors flex items-center gap-1.5"
+              className="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-[#4F7CFF] hover:bg-[#3D6CE6] text-white font-bold text-xs shadow-xs hover:shadow-md flex items-center justify-center gap-2 transition-all"
             >
-              <span>Next Scenario</span>
-              <ArrowRight className="w-3.5 h-3.5" />
+              <span>Try Next Mission</span>
+              <ArrowRight className="w-4 h-4" />
             </button>
           </div>
         </div>
@@ -194,4 +216,3 @@ export const AiFeedbackPage: React.FC<AiFeedbackPageProps> = ({
     </div>
   );
 };
-

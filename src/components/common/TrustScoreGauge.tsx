@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { HelpCircle, ChevronDown, ChevronUp } from 'lucide-react';
+import { Shield, Sparkles, HelpCircle, ChevronDown, ChevronUp, Star } from 'lucide-react';
 
 interface TrustScoreGaugeProps {
   score: number;
@@ -7,7 +7,7 @@ interface TrustScoreGaugeProps {
   size?: 'sm' | 'md' | 'lg';
   showLabel?: boolean;
   showWhyDetail?: boolean;
-  categoryBreakdown?: { name: string; score: number }[];
+  categoryBreakdown?: { name: string; score: number; icon?: string }[];
 }
 
 export const TrustScoreGauge: React.FC<TrustScoreGaugeProps> = ({
@@ -17,151 +17,175 @@ export const TrustScoreGauge: React.FC<TrustScoreGaugeProps> = ({
   showLabel = true,
   showWhyDetail = false,
   categoryBreakdown = [
-    { name: 'Password Security', score: 86 },
-    { name: 'Privacy Awareness', score: 74 },
-    { name: 'Phishing Detection', score: 61 },
-    { name: 'Social Engineering', score: 54 },
-    { name: 'Cyber Ethics', score: 82 },
+    { name: 'Passwords', score: 86, icon: '🔐' },
+    { name: 'Scam Spotting', score: 74, icon: '🎣' },
+    { name: 'Privacy', score: 68, icon: '👀' },
+    { name: 'Smart Sharing', score: 78, icon: '📱' },
+    { name: 'Safe Browsing', score: 82, icon: '🌐' },
   ],
 }) => {
   const [isWhyOpen, setIsWhyOpen] = useState(false);
 
-  // Status mapping
-  let statusText = 'Fair Defense';
-  let barColor = 'bg-blue-500';
-  if (score === 0) {
-    statusText = 'Unrated';
-    barColor = 'bg-slate-600';
-  } else if (score >= 80) {
-    statusText = 'Strong Defense';
-    barColor = 'bg-emerald-500';
-  } else if (score >= 65) {
-    statusText = 'Resilient';
-    barColor = 'bg-blue-500';
-  } else if (score >= 50) {
-    statusText = 'Needs Practice';
-    barColor = 'bg-amber-500';
-  } else {
-    statusText = 'High Risk';
-    barColor = 'bg-rose-500';
-  }
+  // Friendly status tier & encouraging copy
+  let statusBadge = { label: 'Getting Better', color: 'bg-blue-100 text-blue-700 border-blue-200' };
+  let encouragement = 'You’re learning how to be super smart online!';
+  let barColor = 'bg-[#4F7CFF]';
 
-  // Segment count for the technical visual bar (20 segments total)
-  const totalSegments = 20;
-  const filledSegments = Math.round((Math.max(0, Math.min(100, score)) / 100) * totalSegments);
+  if (score === 0) {
+    statusBadge = { label: 'Ready to Start', color: 'bg-slate-100 text-slate-700 border-slate-200' };
+    encouragement = 'Take a starter mission to earn your first Cyber Smart stars!';
+    barColor = 'bg-slate-300';
+  } else if (score >= 85) {
+    statusBadge = { label: 'Cyber Hero 🌟', color: 'bg-emerald-100 text-emerald-700 border-emerald-200' };
+    encouragement = 'Incredible job! You have champion cyber instincts.';
+    barColor = 'bg-[#40C98A]';
+  } else if (score >= 70) {
+    statusBadge = { label: 'Doing Great ⭐', color: 'bg-blue-100 text-blue-700 border-blue-200' };
+    encouragement = 'You’re getting really good at spotting online tricks!';
+    barColor = 'bg-[#4F7CFF]';
+  } else if (score >= 50) {
+    statusBadge = { label: 'Getting Better 🌱', color: 'bg-purple-100 text-purple-700 border-purple-200' };
+    encouragement = 'Keep exploring missions to build your cyber superpower!';
+    barColor = 'bg-[#8B6CFF]';
+  } else {
+    statusBadge = { label: 'Just Starting 🚀', color: 'bg-amber-100 text-amber-700 border-amber-200' };
+    encouragement = 'Every mission you try helps you become safer online!';
+    barColor = 'bg-[#FFC857]';
+  }
 
   // Compact variant for inline navbar / small cards
   if (size === 'sm') {
     return (
-      <div className="flex items-center gap-2 font-mono">
-        <div className="flex items-baseline gap-1">
-          <span className="text-sm font-semibold text-white">{score}</span>
-          <span className="text-[10px] text-slate-400">/100</span>
+      <div className="flex items-center gap-2 font-sans">
+        <div className="flex items-center gap-1">
+          <Shield className="w-3.5 h-3.5 text-[#4F7CFF]" />
+          <span className="text-xs font-bold text-[#243047]">{score}</span>
+          <span className="text-[11px] text-amber-500">⭐</span>
         </div>
-        <div className="flex gap-0.5">
-          {Array.from({ length: 10 }).map((_, i) => (
-            <div
-              key={i}
-              className={`w-1 h-3 rounded-[1px] ${
-                i < Math.round((score / 100) * 10) ? barColor : 'bg-slate-800'
-              }`}
-            />
-          ))}
+        <div className="w-16 h-2 bg-slate-100 rounded-full overflow-hidden border border-slate-200/80">
+          <div
+            className={`h-full rounded-full transition-all duration-500 ${barColor}`}
+            style={{ width: `${Math.max(6, Math.min(100, score))}%` }}
+          />
         </div>
       </div>
     );
   }
 
   return (
-    <div className="w-full select-none text-slate-100">
-      {/* Metric Header */}
+    <div className="w-full select-none text-[#243047] font-sans">
+      {/* Header */}
       <div className="flex items-center justify-between">
-        <span className="font-mono text-[10px] uppercase tracking-wider text-slate-400">
-          Digital Trust Score
-        </span>
+        <div className="flex items-center gap-1.5">
+          <Shield className="w-4 h-4 text-[#4F7CFF]" />
+          <span className="text-xs font-bold tracking-wide text-slate-700 uppercase">
+            Cyber Smart Score
+          </span>
+        </div>
+
         {showWhyDetail && (
           <button
             type="button"
             onClick={() => setIsWhyOpen(!isWhyOpen)}
-            className="inline-flex items-center gap-1 text-[11px] font-mono text-blue-400 hover:text-blue-300 transition-colors"
+            className="inline-flex items-center gap-1 text-xs font-medium text-[#4F7CFF] hover:text-[#3B65E0] transition-colors"
           >
-            <HelpCircle className="w-3 h-3" />
-            <span>Why?</span>
+            <HelpCircle className="w-3.5 h-3.5" />
+            <span>How it works</span>
             {isWhyOpen ? (
-              <ChevronUp className="w-3 h-3" />
+              <ChevronUp className="w-3.5 h-3.5" />
             ) : (
-              <ChevronDown className="w-3 h-3" />
+              <ChevronDown className="w-3.5 h-3.5" />
             )}
           </button>
         )}
       </div>
 
-      {/* Primary Score & Delta */}
-      <div className="mt-1.5 flex items-baseline justify-between">
-        <div className="flex items-baseline gap-2">
-          <span className="font-mono text-3xl font-semibold tracking-tight text-white">
+      {/* Primary Score & Status */}
+      <div className="mt-2.5 flex items-baseline justify-between">
+        <div className="flex items-baseline gap-1.5">
+          <span className="text-3xl sm:text-4xl font-black tracking-tight text-[#243047]">
             {score}
           </span>
-          <span className="font-mono text-xs text-slate-400">/ 100</span>
-        </div>
+          <span className="text-lg font-bold text-amber-500">⭐</span>
+          <span className="text-xs font-medium text-slate-600">/ 100</span>
 
-        {delta !== undefined && (
-          <div className="flex items-center gap-1.5 font-mono text-xs">
+          {delta !== undefined && delta !== 0 && (
             <span
-              className={`px-1.5 py-0.5 rounded-[3px] text-[11px] font-medium ${
+              className={`ml-2 text-xs font-bold px-2 py-0.5 rounded-full ${
                 delta > 0
-                  ? 'bg-blue-950/80 text-blue-300 border border-blue-800/60'
-                  : delta === 0
-                  ? 'bg-slate-800/80 text-slate-400 border border-slate-700/60'
-                  : 'bg-rose-950/80 text-rose-300 border border-rose-800/60'
+                  ? 'bg-emerald-100 text-emerald-700 border border-emerald-200'
+                  : 'bg-amber-100 text-amber-700 border border-amber-200'
               }`}
             >
-              {delta > 0 ? `+${delta} this week` : delta === 0 ? 'Baseline' : `${delta} this week`}
+              {delta > 0 ? `+${delta}` : delta} this week
             </span>
-          </div>
-        )}
-      </div>
-
-      {/* Segmented Technical Bar: 20 blocks */}
-      <div className="mt-2.5 flex items-center gap-1">
-        {Array.from({ length: totalSegments }).map((_, i) => (
-          <div
-            key={i}
-            className={`h-2 flex-1 rounded-[1px] transition-colors duration-300 ${
-              i < filledSegments ? barColor : 'bg-slate-800'
-            }`}
-          />
-        ))}
-      </div>
-
-      {/* Micro Status Label */}
-      {showLabel && (
-        <div className="mt-2 flex items-center justify-between text-[11px] text-slate-400">
-          <span>Compared with your previous assessment.</span>
-          <span className="font-mono font-medium text-slate-300">{statusText}</span>
+          )}
         </div>
-      )}
 
-      {/* Interactive "Why?" Skill Breakdown */}
-      {showWhyDetail && isWhyOpen && (
-        <div className="mt-3 pt-3 border-t border-slate-800/80 space-y-2 animate-in fade-in duration-200">
-          <div className="text-[10px] font-mono uppercase tracking-wider text-slate-400">
-            Competency Breakdown
-          </div>
-          <div className="space-y-1.5 text-xs font-mono">
-            {categoryBreakdown.map(item => (
-              <div
-                key={item.name}
-                className="flex items-center justify-between text-slate-300 py-0.5 hover:text-white"
-              >
-                <span className="truncate pr-2">{item.name}</span>
-                <span className="font-semibold text-slate-200">{item.score}</span>
+        <span
+          className={`text-xs font-bold px-2.5 py-1 rounded-full border ${statusBadge.color}`}
+        >
+          {statusBadge.label}
+        </span>
+      </div>
+
+      <p className="text-xs text-slate-600 mt-1 font-medium">
+        {encouragement}
+      </p>
+
+      {/* Main Score Bar */}
+      <div className="mt-3">
+        <div className="w-full h-3 bg-slate-100 rounded-full overflow-hidden p-0.5 border border-slate-200">
+          <div
+            className={`h-full rounded-full transition-all duration-700 ${barColor}`}
+            style={{ width: `${Math.max(4, Math.min(100, score))}%` }}
+          />
+        </div>
+      </div>
+
+      {/* Category Breakdown preview */}
+      {categoryBreakdown && categoryBreakdown.length > 0 && (
+        <div className="mt-4 pt-3 border-t border-slate-100 space-y-2">
+          <span className="text-[11px] font-bold text-slate-600 uppercase tracking-wider block">
+            Skills You’re Building
+          </span>
+          <div className="space-y-1.5">
+            {categoryBreakdown.map((cat, idx) => (
+              <div key={idx} className="flex items-center justify-between text-xs">
+                <span className="text-slate-600 flex items-center gap-1.5 font-medium">
+                  <span>{cat.icon || '🛡️'}</span>
+                  <span>{cat.name}</span>
+                </span>
+                <div className="flex items-center gap-2">
+                  <div className="w-20 sm:w-24 h-2 bg-slate-100 rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-[#4F7CFF] rounded-full"
+                      style={{ width: `${cat.score}%` }}
+                    />
+                  </div>
+                  <span className="text-[11px] font-bold text-slate-700 w-7 text-right">
+                    {cat.score}%
+                  </span>
+                </div>
               </div>
             ))}
           </div>
         </div>
       )}
+
+      {/* Why Explanation Dialog/Dropdown */}
+      {isWhyOpen && (
+        <div className="mt-3 p-3.5 rounded-xl bg-blue-50/80 border border-blue-100 text-xs text-slate-700 space-y-1.5 animate-in fade-in duration-150">
+          <div className="font-bold text-[#4F7CFF] flex items-center gap-1.5">
+            <Sparkles className="w-3.5 h-3.5" />
+            <span>How your Cyber Smart Score grows:</span>
+          </div>
+          <p className="leading-relaxed">
+            Your score increases as you complete <strong>Cyber Missions</strong>, spot tricky messages, and make smart safety choices.
+            There is never any penalty for learning — making mistakes helps you discover what to look out for next time!
+          </p>
+        </div>
+      )}
     </div>
   );
 };
-

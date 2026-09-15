@@ -49,9 +49,9 @@ export interface RoundResultSummary {
 
 export type RoomStatus =
   | 'waiting' // Host waiting for friend to join
-  | 'starting' // Friend connected! Starting match in 3s
-  | 'in_round' // Round active (10s soft timer)
-  | 'round_locked' // Answer locked by first correct or timeout (2.5s transition)
+  | 'starting' // Friend connected! Starting match
+  | 'in_round' // Round active (10s timer where both players can pick options)
+  | 'round_locked' // Results phase after both picked or timer went up
   | 'game_over' // All 8 rounds completed
   | 'expired';
 
@@ -66,6 +66,7 @@ export interface RoomStateClient {
   roundStartTime: number | null;
   roundDurationSec: number; // 10
   timeRemainingMs: number;
+  answeredPlayerIds: string[]; // List of player IDs who submitted their pick for the current round
   lastRoundResult: RoundResultSummary | null;
   roundHistory: RoundResultSummary[];
   errorMessage?: string;

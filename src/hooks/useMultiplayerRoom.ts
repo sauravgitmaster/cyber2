@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { RoomStateClient, MultiplayerQuestionClient } from '../types/multiplayer';
+import { RoomStateClient, MultiplayerQuestionClient, RoundResultSummary } from '../types/multiplayer';
 import { multiplayerApi, PlayerInput } from '../utils/multiplayerApi';
 import { multiplayerQuestionsPool, getEightRandomQuestions } from '../data/multiplayerQuestions';
 
@@ -31,8 +31,8 @@ function shouldAcceptStateUpdate(
     waiting: 0,
     starting: 1,
     in_round: 2,
-    round_locked: 2,
-    game_over: 3,
+    round_locked: 3,
+    game_over: 4,
     expired: -1,
   };
 
@@ -379,6 +379,7 @@ export function useMultiplayerRoom(currentUser: { id?: string; name: string; ava
         roundStartTime: null,
         roundDurationSec: 10,
         timeRemainingMs: 0,
+        answeredPlayerIds: [],
         lastRoundResult: null,
         roundHistory: [],
         updatedAt: Date.now(),
@@ -535,6 +536,7 @@ export function useMultiplayerRoom(currentUser: { id?: string; name: string; ava
       roundDurationSec: 10,
       roundStartTime: null,
       timeRemainingMs: 10000,
+      answeredPlayerIds: [],
       lastRoundResult: null,
       roundHistory: [],
       updatedAt: Date.now(),
@@ -606,14 +608,23 @@ export function useMultiplayerRoom(currentUser: { id?: string; name: string; ava
     if (!roomCode || isSubmitting) return;
     setIsSubmitting(true);
 
-    // Send to backend
+    // 1. Send to backend
     try {
-      await multiplayerApi.submitAnswer(roomCode, playerIdRef.current, questionId, optionId);
+      const serverState = await multiplayerApi.submitAnswer(roomCode, playerIdRef.current, questionId, optionId);
+      if (serverState) {
+        setRoom((prev) => {
+          if (shouldAcceptStateUpdate(prev, serverState)) {
+            return serverState;
+          }
+          return prev;
+        });
+        broadcastRoomState(serverState);
+      }
     } catch {
       // ignore
     }
 
-    // Update local state
+    // 2. Update local state and broadcast
     setRoom((prev) => {
       if (!prev || prev.status !== 'in_round' || !prev.currentQuestion || prev.currentQuestion.id !== questionId) {
         return prev;
@@ -627,45 +638,90 @@ export function useMultiplayerRoom(currentUser: { id?: string; name: string; ava
       const updatedGuest = prev.guest ? { ...prev.guest } : null;
       const activePlayer = isHostPlayer ? updatedHost : updatedGuest;
 
-      if (activePlayer && isCorrect) {
-        activePlayer.score += 100;
-        activePlayer.correctCount += 1;
+      const updatedAnswered = Array.from(new Set([...(prev.answeredPlayerIds || []), playerIdRef.current]));
+
+      // Determine points: 100 if first correct, 60 if second correct
+      let pointsAwarded = 0;
+      let isFirstCorrect = false;
+      if (isCorrect) {
+        // Check existing round answer records from prior submissions in round
+        const existingAnswers = (prev.lastRoundResult?.playerAnswers || {}) as Record<string, { isCorrect?: boolean }>;
+        const otherAlreadyCorrect = Object.values(existingAnswers).some((ans) => Boolean(ans?.isCorrect));
+        if (!otherAlreadyCorrect) {
+          isFirstCorrect = true;
+          pointsAwarded = 100;
+        } else {
+          pointsAwarded = 60;
+        }
+        if (activePlayer) {
+          activePlayer.score += pointsAwarded;
+          activePlayer.correctCount += 1;
+        }
       }
 
-      const summary = {
+      const existingPlayerAnswers = prev.lastRoundResult?.playerAnswers || {};
+      const newPlayerAnswers = {
+        ...existingPlayerAnswers,
+        [playerIdRef.current]: {
+          optionId,
+          isCorrect,
+          pointsAwarded,
+          responseTimeMs: prev.roundStartTime ? Math.max(100, Date.now() - prev.roundStartTime) : 1000,
+        },
+      };
+
+      // Both players active check
+      const expectedPlayersCount = prev.guest && prev.guest.isConnected ? 2 : 1;
+      const bothPicked = updatedAnswered.length >= expectedPlayersCount;
+
+      let winnerPlayerId = prev.lastRoundResult?.winnerPlayerId || null;
+      let winnerPlayerName = prev.lastRoundResult?.winnerPlayerName || null;
+      if (isCorrect && !winnerPlayerId) {
+        winnerPlayerId = playerIdRef.current;
+        winnerPlayerName = activePlayer?.name || 'Player';
+      }
+
+      const summary: RoundResultSummary = {
         questionId,
         roundNumber: prev.currentRound,
         title: q?.title || 'Cyber Challenge',
         situation: q?.situation || prev.currentQuestion.situation,
         correctOptionId: q?.correctOptionId || optionId,
         correctOptionText: q?.options.find((o) => o.id === (q?.correctOptionId || optionId))?.text || '',
-        winnerPlayerId: isCorrect ? playerIdRef.current : null,
-        winnerPlayerName: isCorrect ? activePlayer?.name || 'Player' : null,
+        winnerPlayerId,
+        winnerPlayerName,
         secondPlayerId: null,
         secondPlayerName: null,
         whySafe: q?.whySafe || 'Great job making the secure choice!',
-        playerAnswers: {
-          [playerIdRef.current]: {
-            optionId,
-            isCorrect,
-            pointsAwarded: isCorrect ? 100 : 0,
-            responseTimeMs: prev.roundStartTime ? Math.max(100, Date.now() - prev.roundStartTime) : 1000,
-          },
-        },
+        playerAnswers: newPlayerAnswers,
       };
 
-      const lockedState: RoomStateClient = {
-        ...prev,
-        status: 'round_locked',
-        host: updatedHost,
-        guest: updatedGuest,
-        lastRoundResult: summary,
-        roundHistory: [...prev.roundHistory, summary],
-        updatedAt: Date.now(),
-      };
-
-      broadcastRoomState(lockedState);
-      return lockedState;
+      // If both picked, lock round now! Otherwise stay in_round until second picks or timer expires.
+      if (bothPicked) {
+        const lockedState: RoomStateClient = {
+          ...prev,
+          status: 'round_locked',
+          host: updatedHost,
+          guest: updatedGuest,
+          answeredPlayerIds: updatedAnswered,
+          lastRoundResult: summary,
+          roundHistory: [...prev.roundHistory, summary],
+          updatedAt: Date.now(),
+        };
+        broadcastRoomState(lockedState);
+        return lockedState;
+      } else {
+        const waitingForFriendState: RoomStateClient = {
+          ...prev,
+          host: updatedHost,
+          guest: updatedGuest,
+          answeredPlayerIds: updatedAnswered,
+          lastRoundResult: summary,
+          updatedAt: Date.now(),
+        };
+        broadcastRoomState(waitingForFriendState);
+        return waitingForFriendState;
+      }
     });
 
     setIsSubmitting(false);
@@ -737,6 +793,8 @@ export function useMultiplayerRoom(currentUser: { id?: string; name: string; ava
             roundStartTime: Date.now(),
             roundDurationSec: 10,
             timeRemainingMs: 10000,
+            answeredPlayerIds: [],
+            lastRoundResult: null,
             updatedAt: Date.now(),
           };
           broadcastRoomState(activeState);
@@ -747,7 +805,63 @@ export function useMultiplayerRoom(currentUser: { id?: string; name: string; ava
       return () => clearTimeout(timer);
     }
 
-    // 2. Round locked -> Next round or game_over
+    // 2. Active round timer: Decrement timer, and when 10s timer runs out, lock the round!
+    if (room.status === 'in_round') {
+      const interval = setInterval(() => {
+        setRoom((prev) => {
+          if (!prev || prev.status !== 'in_round' || !prev.roundStartTime) return prev;
+          const elapsed = Date.now() - prev.roundStartTime;
+          const remainingMs = Math.max(0, (prev.roundDurationSec || 10) * 1000 - elapsed);
+
+          // If 10s timer expires, lock the round and display results!
+          if (remainingMs <= 0) {
+            const currentQ = prev.currentQuestion;
+            const q = currentQ ? multiplayerQuestionsPool.find((item) => item.id === currentQ.id) : null;
+            const existingSummary = prev.lastRoundResult;
+            const summary: RoundResultSummary = existingSummary || {
+              questionId: currentQ?.id || '',
+              roundNumber: prev.currentRound,
+              title: q?.title || 'Cyber Challenge',
+              situation: currentQ?.situation || '',
+              correctOptionId: q?.correctOptionId || '',
+              correctOptionText: q?.options.find((o) => o.id === q?.correctOptionId)?.text || 'Safe choice',
+              winnerPlayerId: null,
+              winnerPlayerName: null,
+              secondPlayerId: null,
+              secondPlayerName: null,
+              whySafe: q?.whySafe || 'Great job thinking about cybersecurity!',
+              playerAnswers: {},
+            };
+
+            const lockedState: RoomStateClient = {
+              ...prev,
+              status: 'round_locked',
+              timeRemainingMs: 0,
+              lastRoundResult: summary,
+              roundHistory: prev.roundHistory.some((h) => h.roundNumber === prev.currentRound)
+                ? prev.roundHistory
+                : [...prev.roundHistory, summary],
+              updatedAt: Date.now(),
+            };
+            broadcastRoomState(lockedState);
+            return lockedState;
+          }
+
+          // Otherwise update smooth timeRemainingMs
+          if (Math.abs(prev.timeRemainingMs - remainingMs) > 100) {
+            return {
+              ...prev,
+              timeRemainingMs: remainingMs,
+            };
+          }
+          return prev;
+        });
+      }, 200);
+
+      return () => clearInterval(interval);
+    }
+
+    // 3. Round locked -> Next round or game_over after 3 seconds of viewing result
     if (room.status === 'round_locked') {
       const timer = setTimeout(() => {
         setRoom((prev) => {
@@ -772,6 +886,7 @@ export function useMultiplayerRoom(currentUser: { id?: string; name: string; ava
               roundStartTime: Date.now(),
               roundDurationSec: 10,
               timeRemainingMs: 10000,
+              answeredPlayerIds: [],
               lastRoundResult: null,
               updatedAt: Date.now(),
             };
@@ -788,7 +903,7 @@ export function useMultiplayerRoom(currentUser: { id?: string; name: string; ava
             return overState;
           }
         });
-      }, 2800);
+      }, 3000);
 
       return () => clearTimeout(timer);
     }

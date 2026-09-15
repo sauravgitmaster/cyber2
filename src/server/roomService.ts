@@ -90,6 +90,7 @@ export function toClientState(room: RoomInternal, forPlayerId?: string): RoomSta
     roundStartTime: room.roundStartTime,
     roundDurationSec: room.roundDurationSec,
     timeRemainingMs,
+    answeredPlayerIds: Array.from(room.answers.keys()),
     lastRoundResult: room.lastRoundResult,
     roundHistory: room.roundHistory,
     updatedAt: room.updatedAt,
@@ -185,9 +186,9 @@ function tickRoom(room: RoomInternal, now = Date.now()): boolean {
     }
   }
 
-  // 3. Round locked transition: 2.8 seconds
+  // 3. Round locked transition: 3.2 seconds
   if (room.status === 'round_locked' && room.roundLockTime) {
-    if (now - room.roundLockTime >= 2800) {
+    if (now - room.roundLockTime >= 3200) {
       if (room.currentQuestionIndex < room.questions.length - 1) {
         room.currentQuestionIndex++;
         room.status = 'in_round';
@@ -405,7 +406,7 @@ export const roomService = {
 
     if (isCorrect) {
       if (room.firstWinnerId === null) {
-        // FIRST CORRECT ANSWER!
+        // First player to pick correct answer
         room.firstWinnerId = playerId;
         pointsAwarded = 100;
         player.score += 100;
@@ -414,12 +415,8 @@ export const roomService = {
         if (player.fastestResponseMs === null || responseTimeMs < player.fastestResponseMs) {
           player.fastestResponseMs = responseTimeMs;
         }
-
-        // Lock round immediately!
-        room.status = 'round_locked';
-        room.roundLockTime = now;
       } else if (room.secondWinnerId === null) {
-        // SECOND CORRECT ANSWER within lock transition
+        // Second player to pick correct answer
         room.secondWinnerId = playerId;
         pointsAwarded = 60;
         player.score += 60;
@@ -437,19 +434,18 @@ export const roomService = {
       responseTimeMs,
     });
 
-    // If both players have answered, lock the round immediately
-    if (room.answers.size >= 2 && room.status === 'in_round') {
+    // ONLY after BOTH players have picked their options, or when timer expires (handled by tickRoom),
+    // do we lock the round and reveal the results!
+    const activeExpectedCount = room.guest && room.guest.isConnected ? 2 : 1;
+    if (room.answers.size >= activeExpectedCount && room.status === 'in_round') {
       room.status = 'round_locked';
       room.roundLockTime = now;
-    }
-
-    // If round locked, build result summary
-    if (room.status === 'round_locked') {
       const summary = buildRoundResult(room);
       room.lastRoundResult = summary;
       room.roundHistory.push(summary);
     }
 
+    room.updatedAt = now;
     broadcast(room);
     return toClientState(room, playerId);
   },

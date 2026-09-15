@@ -36,29 +36,54 @@ export const MultiplayerScoreBar: React.FC<MultiplayerScoreBarProps> = ({
         <div className="flex items-center gap-2 min-w-0">
           <span className="text-2xl shrink-0">{me?.avatar || '🤖'}</span>
           <div className="truncate">
-            <span className="text-xs font-black text-[#243047] block truncate">
-              {me?.name || 'You'} (You)
-            </span>
+            <div className="flex items-center gap-1.5">
+              <span className="text-xs font-black text-[#243047] block truncate">
+                {me?.name || 'You'} (You)
+              </span>
+              {room.status === 'in_round' && (
+                me && room.answeredPlayerIds?.includes(me.id) ? (
+                  <span className="text-[10px] font-black px-1.5 py-0.5 rounded-md bg-emerald-100 text-emerald-700">
+                    Picked ✓
+                  </span>
+                ) : (
+                  <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-slate-100 text-slate-500">
+                    Choosing…
+                  </span>
+                )
+              )}
+            </div>
             <span className="text-xs font-black text-[#4F7CFF]">{me?.score || 0} ⭐</span>
           </div>
         </div>
 
-        {/* Center: Round & Soft Timer */}
+        {/* Center: Round & 10s Timer */}
         <div className="flex flex-col items-center shrink-0">
           <div className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
             Round {room.currentRound} of {room.totalRounds}
           </div>
 
-          {/* Soft Timer Ring */}
+          {/* 10s Countdown Timer */}
           <div className="flex items-center gap-1.5 mt-0.5">
             <div className="w-16 h-2 bg-slate-100 rounded-full overflow-hidden border border-slate-200">
               <div
-                className="h-full bg-gradient-to-r from-blue-400 to-indigo-500 transition-all duration-300 rounded-full"
+                className={`h-full transition-all duration-300 rounded-full ${
+                  remainingSec <= 3
+                    ? 'bg-rose-500'
+                    : remainingSec <= 5
+                    ? 'bg-amber-500'
+                    : 'bg-gradient-to-r from-blue-400 to-indigo-500'
+                }`}
                 style={{ width: `${progressRatio * 100}%` }}
               />
             </div>
-            <span className="text-xs font-mono font-bold text-slate-600 w-4 text-right">
-              {remainingSec}
+            <span
+              className={`text-xs font-mono font-black w-5 text-right ${
+                remainingSec <= 3
+                  ? 'text-rose-600 animate-pulse'
+                  : 'text-slate-700'
+              }`}
+            >
+              {remainingSec}s
             </span>
           </div>
         </div>
@@ -66,9 +91,22 @@ export const MultiplayerScoreBar: React.FC<MultiplayerScoreBarProps> = ({
         {/* Friend */}
         <div className="flex items-center gap-2 text-right min-w-0 justify-end">
           <div className="truncate">
-            <span className="text-xs font-black text-[#243047] block truncate">
-              {friend?.name || 'Friend'}
-            </span>
+            <div className="flex items-center justify-end gap-1.5">
+              {room.status === 'in_round' && (
+                friend && room.answeredPlayerIds?.includes(friend.id) ? (
+                  <span className="text-[10px] font-black px-1.5 py-0.5 rounded-md bg-emerald-100 text-emerald-700">
+                    Picked ✓
+                  </span>
+                ) : (
+                  <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-slate-100 text-slate-500">
+                    Choosing…
+                  </span>
+                )
+              )}
+              <span className="text-xs font-black text-[#243047] block truncate">
+                {friend?.name || 'Friend'}
+              </span>
+            </div>
             <span className="text-xs font-black text-amber-500">{friend?.score || 0} ⭐</span>
           </div>
           <span className="text-2xl shrink-0">{friend?.avatar || '🦊'}</span>

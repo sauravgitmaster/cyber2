@@ -6,6 +6,25 @@ export interface PlayerInput {
   avatar: string;
 }
 
+async function handleResponse<T>(res: Response, defaultErrorMessage: string): Promise<T> {
+  const contentType = res.headers.get('content-type') || '';
+  const isJson = contentType.includes('application/json');
+
+  if (!res.ok) {
+    if (isJson) {
+      const errData = await res.json().catch(() => ({}));
+      throw new Error(errData.error || defaultErrorMessage);
+    }
+    throw new Error(defaultErrorMessage);
+  }
+
+  if (!isJson) {
+    throw new Error('Game server response was not valid JSON.');
+  }
+
+  return res.json() as Promise<T>;
+}
+
 export const multiplayerApi = {
   async createRoom(host: PlayerInput): Promise<RoomStateClient> {
     const res = await fetch('/api/rooms/create', {
@@ -13,11 +32,7 @@ export const multiplayerApi = {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ host }),
     });
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({}));
-      throw new Error(err.error || 'Failed to create room');
-    }
-    return res.json();
+    return handleResponse<RoomStateClient>(res, 'Failed to create room');
   },
 
   async joinRoom(code: string, guest: PlayerInput): Promise<RoomStateClient> {
@@ -26,21 +41,13 @@ export const multiplayerApi = {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ code, guest }),
     });
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({}));
-      throw new Error(err.error || 'Hmm… I can’t find that game.');
-    }
-    return res.json();
+    return handleResponse<RoomStateClient>(res, 'Hmm… I can’t find that game.');
   },
 
   async getRoomState(code: string, playerId?: string): Promise<RoomStateClient> {
     const url = `/api/rooms/${encodeURIComponent(code)}${playerId ? `?playerId=${encodeURIComponent(playerId)}` : ''}`;
     const res = await fetch(url);
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({}));
-      throw new Error(err.error || 'Game not found');
-    }
-    return res.json();
+    return handleResponse<RoomStateClient>(res, 'Game not found');
   },
 
   async startGame(code: string, playerId: string): Promise<RoomStateClient> {
@@ -49,11 +56,7 @@ export const multiplayerApi = {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ playerId }),
     });
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({}));
-      throw new Error(err.error || 'Failed to start game');
-    }
-    return res.json();
+    return handleResponse<RoomStateClient>(res, 'Failed to start game');
   },
 
   async submitAnswer(
@@ -67,11 +70,7 @@ export const multiplayerApi = {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ playerId, questionId, optionId, clientTime: Date.now() }),
     });
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({}));
-      throw new Error(err.error || 'Failed to submit answer');
-    }
-    return res.json();
+    return handleResponse<RoomStateClient>(res, 'Failed to submit answer');
   },
 
   async restartGame(code: string, playerId: string): Promise<RoomStateClient> {
@@ -80,11 +79,7 @@ export const multiplayerApi = {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ playerId }),
     });
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({}));
-      throw new Error(err.error || 'Failed to restart game');
-    }
-    return res.json();
+    return handleResponse<RoomStateClient>(res, 'Failed to restart game');
   },
 
   async heartbeat(code: string, playerId: string): Promise<boolean> {

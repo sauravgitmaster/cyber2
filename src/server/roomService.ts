@@ -153,6 +153,10 @@ function buildRoundResult(room: RoomInternal): RoundResultSummary {
 
 // Exported Room Operations
 export const roomService = {
+  getActiveRoomsCount(): number {
+    return rooms.size;
+  },
+
   createRoom(hostData: { id: string; name: string; avatar: string }): RoomStateClient {
     let code = generateRoomCode();
     while (rooms.has(code)) {

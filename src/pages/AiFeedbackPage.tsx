@@ -43,6 +43,34 @@ export const AiFeedbackPage: React.FC<AiFeedbackPageProps> = ({
   const isPartial = !isOptimal && (feedback.decisionQuality === 'Fair' || option.riskLevel === 'Moderate');
 
   const [showTechnicalDetails, setShowTechnicalDetails] = useState(false);
+  const [aiCoaching, setAiCoaching] = useState<{ coaching: string; detectiveTip: string } | null>(null);
+
+  // Fetch live AI coaching from backend
+  React.useEffect(() => {
+    let isMounted = true;
+    fetch('/api/scenario/feedback', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        missionTitle: scenario.title,
+        userChoice: option.text,
+        isOptimal,
+        scenarioContext: scenario.description,
+      }),
+    })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (isMounted && data?.coaching) {
+          setAiCoaching(data);
+        }
+      })
+      .catch(() => {
+        // silent fallback
+      });
+    return () => {
+      isMounted = false;
+    };
+  }, [scenario.title, option.text, isOptimal, scenario.description]);
 
   // Score reward text
   const scoreReward = isOptimal ? 8 : (isPartial ? 2 : 0);
@@ -155,6 +183,25 @@ export const AiFeedbackPage: React.FC<AiFeedbackPageProps> = ({
             </div>
           </div>
         </div>
+
+        {/* Live AI Coaching Card from Gemini Server */}
+        {aiCoaching && (
+          <div className="p-5 rounded-2xl bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 space-y-2 animate-in fade-in">
+            <div className="flex items-center gap-2 text-xs font-black text-blue-900 uppercase tracking-wider">
+              <Sparkles className="w-4 h-4 text-[#4F7CFF]" />
+              <span>BYTE'S LIVE CYBER COACHING</span>
+            </div>
+            <p className="text-xs sm:text-sm text-slate-800 leading-relaxed font-medium">
+              {aiCoaching.coaching}
+            </p>
+            {aiCoaching.detectiveTip && (
+              <div className="pt-2 border-t border-blue-200/60 text-xs text-blue-950 font-bold flex items-center gap-1.5">
+                <span>🕵️ Clue:</span>
+                <span>{aiCoaching.detectiveTip}</span>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Section: Byte's Golden Rule */}
         <div className="p-5 rounded-2xl bg-amber-50/70 border border-amber-200 space-y-2">

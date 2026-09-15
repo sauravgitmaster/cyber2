@@ -38,6 +38,7 @@ export const AiMentorDrawer: React.FC<AiMentorDrawerProps> = ({
   insight,
   onStartRecommendation,
   userTrustScore,
+  activePage,
   onNavigate,
 }) => {
   const learnerName = user?.name || 'there';
@@ -58,7 +59,7 @@ export const AiMentorDrawer: React.FC<AiMentorDrawerProps> = ({
 
   if (!isOpen) return null;
 
-  const handleSend = (textToSend?: string) => {
+  const handleSend = async (textToSend?: string) => {
     const question = (textToSend || inputText).trim();
     if (!question) return;
 
@@ -72,55 +73,85 @@ export const AiMentorDrawer: React.FC<AiMentorDrawerProps> = ({
     setInputText('');
     setIsTyping(true);
 
-    setTimeout(() => {
+    try {
       let reply = '';
       let technical = '';
       let replyMood: ByteMood = 'happy';
 
-      const lower = question.toLowerCase();
+      // 1. Call real backend API
+      try {
+        const res = await fetch('/api/mentor/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            question,
+            context: {
+              name: learnerName,
+              score: smartScore,
+              page: activePage,
+            },
+          }),
+        });
 
-      if (lower.includes('safe') || lower.includes('message') || lower.includes('email') || lower.includes('phish')) {
-        reply =
-          'Whoa! When checking any unexpected message, ask yourself three simple questions:\n1. Did I actually ask for this?\n2. Are they trying to rush me with "ACT NOW"?\n3. Does the sender address look a little bit strange?\n\nIf anything feels off, don\'t click the link — go directly to the real app or website yourself!';
-        technical =
-          'Technical explanation: Phishers rely on lookalike domain names and mismatched SMTP headers (where the Return-Path or DKIM signature does not align with the displayed From address). Hovering links reveals the real target destination URL before clicking.';
-        replyMood = 'detective';
-      } else if (lower.includes('spot a scam') || lower.includes('scam')) {
-        reply =
-          'Scammers love to pretend to be someone you trust (like school IT, a gaming friend, or a company). They almost always use urgency ("Your account will be deleted in 1 hour!") or promise free prizes/Robux/gift cards to make you rush. Take a breath — real services will never rush you into giving away your password.';
-        technical =
-          'Technical explanation: This tactic is known as Pretexting and Social Engineering. Attackers manufacture artificial crisis states to bypass cognitive skepticism. Authentication protocols (like MFA) and out-of-band verification defeat this vector.';
-        replyMood = 'caution';
-      } else if (lower.includes('share') || lower.includes('privacy') || lower.includes('personal')) {
-        reply =
-          'Smart rule: Keep your "secret treasure" safe! Never share your full birthdate, home address, school schedule, parent names, or passwords in public chats or quizzes. Even quizzes that ask "What was your first pet\'s name?" can be tricks to guess your password reset questions!';
-        technical =
-          'Technical explanation: Social media quizzes frequently act as crowdsourced Open Source Intelligence (OSINT) harvesters targeting common security recovery question databases.';
-        replyMood = 'thinking';
-      } else if (lower.includes('suspicious') || lower.includes('website') || lower.includes('link') || lower.includes('url')) {
-        reply =
-          'Take a close look at the address bar! Scammers often swap letters (like using "1" instead of "l", or adding extra words like "login-verify-account.com"). If it\'s not the exact official web address, it\'s not safe.';
-        technical =
-          'Technical explanation: Attackers use typo-squatting, homoglyph attacks, and multi-level subdomains (e.g. portal.school.edu.attacker-site.com) where the true root domain sits directly before the first single forward slash.';
-        replyMood = 'detective';
-      } else if (lower.includes('hint')) {
-        reply =
-          'Here is Byte\'s golden rule: "When in doubt, check it out out-of-band!" That means instead of clicking any link inside a message, open a fresh browser tab and visit the official website directly from your bookmarks.';
-        technical =
-          'Technical explanation: Out-of-band verification completely neutralizes credential harvesting proxies and adversary-in-the-middle (AiTM) authentication reverse-proxies.';
-        replyMood = 'excited';
-      } else if (lower.includes('password')) {
-        reply =
-          'Long beats complicated! A password made of 4 random words (like "purple-bicycle-forest-pancake") is way easier for you to remember and almost impossible for a computer to guess! And never use the same password on two different sites.';
-        technical =
-          'Technical explanation: Password entropy scales geometrically with length. A 16+ character multi-word passphrase resists brute-force GPU cluster cracking far better than an 8-character string with complex symbols.';
-        replyMood = 'proud';
-      } else {
-        reply =
-          `That is a great question! Every time you pause and think before clicking, you are leveling up your cyber superhero powers. What specific part would you like to explore together?`;
-        technical =
-          'Defensive principle: Zero-Trust framework dictates that all inbound digital requests must be verified, whether from internal or external sources.';
-        replyMood = 'happy';
+        const contentType = res.headers.get('content-type') || '';
+        if (res.ok && contentType.includes('application/json')) {
+          const data = await res.json();
+          if (data && data.reply) {
+            reply = data.reply;
+            technical = data.technical || '';
+            replyMood = (data.mood as ByteMood) || 'happy';
+          }
+        }
+      } catch (networkErr) {
+        // Fallback to local rules
+      }
+
+      // 2. Local fallback if API server was unreachable
+      if (!reply) {
+        const lower = question.toLowerCase();
+        if (lower.includes('safe') || lower.includes('message') || lower.includes('email') || lower.includes('phish')) {
+          reply =
+            'Whoa! When checking any unexpected message, ask yourself three simple questions:\n1. Did I actually ask for this?\n2. Are they trying to rush me with "ACT NOW"?\n3. Does the sender address look a little bit strange?\n\nIf anything feels off, don\'t click the link — go directly to the real app or website yourself!';
+          technical =
+            'Technical explanation: Phishers rely on lookalike domain names and mismatched SMTP headers. Hovering links reveals the real target destination URL before clicking.';
+          replyMood = 'detective';
+        } else if (lower.includes('spot a scam') || lower.includes('scam')) {
+          reply =
+            'Scammers love to pretend to be someone you trust (like school IT, a gaming friend, or a company). They almost always use urgency ("Your account will be deleted in 1 hour!") or promise free prizes/Robux/gift cards to make you rush. Take a breath — real services will never rush you into giving away your password.';
+          technical =
+            'Technical explanation: This tactic is known as Pretexting and Social Engineering. Attackers manufacture artificial crisis states to bypass cognitive skepticism.';
+          replyMood = 'caution';
+        } else if (lower.includes('share') || lower.includes('privacy') || lower.includes('personal')) {
+          reply =
+            'Smart rule: Keep your "secret treasure" safe! Never share your full birthdate, home address, school schedule, parent names, or passwords in public chats or quizzes. Even quizzes that ask "What was your first pet\'s name?" can be tricks to guess your password reset questions!';
+          technical =
+            'Technical explanation: Social media quizzes frequently act as crowdsourced Open Source Intelligence (OSINT) harvesters targeting common security recovery question databases.';
+          replyMood = 'thinking';
+        } else if (lower.includes('suspicious') || lower.includes('website') || lower.includes('link') || lower.includes('url')) {
+          reply =
+            'Take a close look at the address bar! Scammers often swap letters (like using "1" instead of "l", or adding extra words like "login-verify-account.com"). If it\'s not the exact official web address, it\'s not safe.';
+          technical =
+            'Technical explanation: Attackers use typo-squatting, homoglyph attacks, and multi-level subdomains. The true root domain sits directly before the first single forward slash.';
+          replyMood = 'detective';
+        } else if (lower.includes('hint')) {
+          reply =
+            'Here is Byte\'s golden rule: "When in doubt, check it out out-of-band!" That means instead of clicking any link inside a message, open a fresh browser tab and visit the official website directly from your bookmarks.';
+          technical =
+            'Technical explanation: Out-of-band verification completely neutralizes credential harvesting proxies and adversary-in-the-middle reverse-proxies.';
+          replyMood = 'excited';
+        } else if (lower.includes('password')) {
+          reply =
+            'Long beats complicated! A password made of 4 random words (like "purple-bicycle-forest-pancake") is way easier for you to remember and almost impossible for a computer to guess! And never use the same password on two different sites.';
+          technical =
+            'Technical explanation: Password entropy scales geometrically with length. A 16+ character multi-word passphrase resists brute-force GPU cluster cracking far better than an 8-character string with complex symbols.';
+          replyMood = 'proud';
+        } else {
+          reply =
+            `That is a great question, ${learnerName}! Every time you pause and think before clicking, you are leveling up your cyber superhero powers. Always protect your passwords and ask a trusted adult if something feels weird.`;
+          technical =
+            'Defensive principle: Zero-Trust framework dictates that all inbound digital requests must be verified, whether from internal or external sources.';
+          replyMood = 'happy';
+        }
       }
 
       setMessages((prev) => [
@@ -134,8 +165,11 @@ export const AiMentorDrawer: React.FC<AiMentorDrawerProps> = ({
           mood: replyMood,
         },
       ]);
+    } catch {
+      // quiet fallback
+    } finally {
       setIsTyping(false);
-    }, 500);
+    }
   };
 
   return (

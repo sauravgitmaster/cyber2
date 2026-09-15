@@ -44,7 +44,7 @@ export const CreateGame: React.FC<CreateGameProps> = ({
     setTimeout(() => setCopiedLink(false), 2000);
   };
 
-  const isGuestConnected = Boolean(room?.guest && room.guest.isConnected);
+  const isGuestConnected = Boolean(room?.guest && room.guest.isConnected !== false);
 
   return (
     <div className="max-w-md mx-auto p-6 sm:p-8 bg-white rounded-3xl border border-slate-200 shadow-sm text-center space-y-6">

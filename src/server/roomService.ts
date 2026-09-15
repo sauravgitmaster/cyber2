@@ -40,7 +40,9 @@ interface RoomInternal {
   subscribers: Set<Response>;
 }
 
-const rooms = new Map<string, RoomInternal>();
+const rooms: Map<string, RoomInternal> =
+  (globalThis as any).__CYBERMENTOR_ROOMS__ ||
+  ((globalThis as any).__CYBERMENTOR_ROOMS__ = new Map<string, RoomInternal>());
 
 // Generate 6-char friendly code without confusing characters (no 0/O, 1/I)
 function generateRoomCode(): string {
@@ -210,20 +212,31 @@ export const roomService = {
       throw new Error('This game has ended.');
     }
 
+    let effectiveGuestId = guestData.id;
+
+    // Disambiguate if host ID is used to join (e.g. testing in two tabs under same login)
+    if (room.host.id === effectiveGuestId) {
+      if (!room.guest) {
+        effectiveGuestId = `${guestData.id}_guest_${Math.random().toString(36).substr(2, 4)}`;
+      } else if (room.guest.id.startsWith(`${guestData.id}_guest`)) {
+        room.guest.isConnected = true;
+        room.guest.lastSeen = Date.now();
+        broadcast(room);
+        return toClientState(room, room.guest.id);
+      } else {
+        room.host.isConnected = true;
+        room.host.lastSeen = Date.now();
+        broadcast(room);
+        return toClientState(room, effectiveGuestId);
+      }
+    }
+
     // If guest is already in this room (reconnect scenario)
-    if (room.guest && room.guest.id === guestData.id) {
+    if (room.guest && (room.guest.id === effectiveGuestId || room.guest.id === guestData.id)) {
       room.guest.isConnected = true;
       room.guest.lastSeen = Date.now();
       broadcast(room);
-      return toClientState(room, guestData.id);
-    }
-
-    // If host is reconnecting
-    if (room.host.id === guestData.id) {
-      room.host.isConnected = true;
-      room.host.lastSeen = Date.now();
-      broadcast(room);
-      return toClientState(room, guestData.id);
+      return toClientState(room, room.guest.id);
     }
 
     // Room is full if guest already present and active
@@ -233,7 +246,7 @@ export const roomService = {
 
     // Attach new guest
     room.guest = {
-      id: guestData.id,
+      id: effectiveGuestId,
       name: guestData.name || 'Friend',
       avatar: guestData.avatar || '🦊',
       score: 0,
